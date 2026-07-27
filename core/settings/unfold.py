@@ -68,7 +68,7 @@ UNFOLD = {
     "SITE_HEADER": "Internal Application",
     "SITE_SUBHEADER": "The Deep Seafood",
     "SHOW_BACK_BUTTON": True,
-    "THEME": "dark",
+    # "THEME": "dark",
     "SCRIPTS": [
         lambda request: static("js/main.js"),
     ],
@@ -89,6 +89,12 @@ UNFOLD = {
                         "link": reverse_lazy("admin:credentials_credential_changelist"),
                         "permission": can_view_credentials,
                     },
+                    {
+                        "title": "Quick Copy",
+                        "icon": "content_copy",
+                        "link": reverse_lazy("admin:quickcopy_quickcopy_changelist"),
+                        "permission": can_view_credentials,
+                    },
                 ],
             },
             {
@@ -97,7 +103,7 @@ UNFOLD = {
                 "separator": True,
                 "items": [
                     {
-                        "title": "Projects",
+                        "title": "Tasks Dashboard",
                         "icon": "folder_open",
                         "link": reverse_lazy("admin:tasks_dashboard"),
                         "permission": can_view_tasks,

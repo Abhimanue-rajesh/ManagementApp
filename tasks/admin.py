@@ -1,7 +1,11 @@
+import json
+
+from dateutil.relativedelta import relativedelta
 from django.contrib import admin, messages
 from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Q
+from django.db.models.functions import TruncMonth
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import path, reverse
@@ -192,8 +196,122 @@ class TasksDashboard(UnfoldModelAdminViewMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        context["projects"] = Project.objects.all().order_by("name")
-        context["task_list_url"] = reverse("admin:tasks_task_changelist")
+        today = localdate()
+        start_month = today.replace(day=1) - relativedelta(months=4)
+
+        monthly_data = (
+            Task.objects.filter(created_at__gte=start_month)
+            .annotate(month=TruncMonth("created_at"))
+            .values("month")
+            .annotate(
+                not_started=Count(
+                    "id",
+                    filter=Q(status="not_started"),
+                ),
+                in_progress=Count(
+                    "id",
+                    filter=Q(status="in_progress"),
+                ),
+                waiting_for_approval=Count(
+                    "id",
+                    filter=Q(status="waiting_for_approval"),
+                ),
+                closed=Count(
+                    "id",
+                    filter=Q(status="closed"),
+                ),
+                terminated=Count(
+                    "id",
+                    filter=Q(status="terminated"),
+                ),
+            )
+            .order_by("month")
+        )
+
+        monthly_lookup = {
+            item["month"].strftime("%Y-%m"): item for item in monthly_data
+        }
+
+        labels = []
+        not_started_counts = []
+        in_progress_counts = []
+        waiting_counts = []
+        closed_counts = []
+        terminated_counts = []
+
+        for index in range(5):
+            month = start_month + relativedelta(months=index)
+            month_key = month.strftime("%Y-%m")
+            month_data = monthly_lookup.get(month_key, {})
+
+            labels.append(month.strftime("%b %Y"))
+            not_started_counts.append(month_data.get("not_started", 0))
+            in_progress_counts.append(month_data.get("in_progress", 0))
+            waiting_counts.append(month_data.get("waiting_for_approval", 0))
+            closed_counts.append(month_data.get("closed", 0))
+            terminated_counts.append(month_data.get("terminated", 0))
+
+        task_summary = Task.objects.aggregate(
+            total=Count("id"),
+            not_started=Count(
+                "id",
+                filter=Q(status="not_started"),
+            ),
+            in_progress=Count(
+                "id",
+                filter=Q(status="in_progress"),
+            ),
+            waiting_for_approval=Count(
+                "id",
+                filter=Q(status="waiting_for_approval"),
+            ),
+            closed=Count(
+                "id",
+                filter=Q(status="closed"),
+            ),
+            terminated=Count(
+                "id",
+                filter=Q(status="terminated"),
+            ),
+        )
+
+        projects = Project.objects.annotate(
+            total_tasks=Count("tasks"),
+            not_started_tasks=Count(
+                "tasks",
+                filter=Q(tasks__status="not_started"),
+            ),
+            in_progress_tasks=Count(
+                "tasks",
+                filter=Q(tasks__status="in_progress"),
+            ),
+            waiting_for_approval_tasks=Count(
+                "tasks",
+                filter=Q(tasks__status="waiting_for_approval"),
+            ),
+            closed_tasks=Count(
+                "tasks",
+                filter=Q(tasks__status="closed"),
+            ),
+            terminated_tasks=Count(
+                "tasks",
+                filter=Q(tasks__status="terminated"),
+            ),
+        ).order_by("name")
+        context.update(
+            {
+                # "projects": Project.objects.all().order_by("name"),
+                "task_list_url": reverse("admin:tasks_task_changelist"),
+                "task_chart_labels": json.dumps(labels),
+                "task_not_started_counts": json.dumps(not_started_counts),
+                "task_in_progress_counts": json.dumps(in_progress_counts),
+                "task_waiting_counts": json.dumps(waiting_counts),
+                "task_closed_counts": json.dumps(closed_counts),
+                "task_terminated_counts": json.dumps(terminated_counts),
+                "task_summary": task_summary,
+                "projects": projects,
+            }
+        )
 
         return context
 
