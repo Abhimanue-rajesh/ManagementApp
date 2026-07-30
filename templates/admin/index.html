@@ -13,126 +13,180 @@
     <div class="flex flex-col gap-6">
         <h1 class="text-2xl font-semibold text-font-important-light dark:text-font-important-dark">{% trans "Dashboard" %}</h1>
         <div class="grid grid-cols-1 gap-4 xl:grid-cols-3">
-            <!-- Ticket Chart -->
-            <div class="xl:col-span-2 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-base-700 dark:bg-base-900">
-                <div class="mb-4">
-                    <h2 class="text-base font-semibold text-font-important-light dark:text-font-important-dark">Ticket Activity</h2>
-                    <p class="text-sm text-font-subtle-light dark:text-font-subtle-dark">Created tickets for the last 5 months</p>
-                </div>
-                <div id="ticket-column-chart"></div>
-                <script id="ticket-chart-labels" type="application/json">{{ ticket_chart_labels|safe }}</script>
-                <script id="ticket-created-counts" type="application/json">{{ ticket_created_counts|safe }}</script>
-            </div>
-            <!-- Task Summary -->
-            <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-base-700 dark:bg-base-900">
-                <h2 class="mb-3 text-sm font-medium text-font-subtle-light dark:text-font-subtle-dark">{% trans "Total Tasks" %}</h2>
-                <p class="mb-5 text-3xl font-semibold tracking-tight text-font-important-light dark:text-font-important-dark">
-                    {{ total_tasks }}
-                </p>
-                <div class="border-t border-gray-200 pt-4 dark:border-base-700">
-                    <h3 class="mb-4 text-sm font-medium text-font-subtle-light dark:text-font-subtle-dark">Tasks by Category</h3>
-                    <div class="flex flex-col gap-3">
-                        {% for category in task_category_counts %}
-                            <div class="flex items-center justify-between gap-3">
-                                <span class="truncate text-sm text-font-default-light dark:text-font-default-dark">{{ category.name }}</span>
-                                <span class="shrink-0 rounded-full bg-primary-50 px-3 py-1 text-sm font-semibold text-primary-600 dark:bg-primary-900/20">
-                                    {{ category.task_count }}
-                                </span>
-                            </div>
-                        {% empty %}
-                            <p class="text-sm text-font-subtle-light dark:text-font-subtle-dark">No task categories found.</p>
-                        {% endfor %}
+            {% if perms.tickets.view_supportticket %}
+                <!-- Ticket Chart -->
+                <div class="xl:col-span-2 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-base-700 dark:bg-base-900">
+                    <div class="mb-4">
+                        <h2 class="text-base font-semibold text-font-important-light dark:text-font-important-dark">Ticket Activity</h2>
+                        <p class="text-sm text-font-subtle-light dark:text-font-subtle-dark">Created tickets for the last 5 months</p>
                     </div>
+                    <div id="ticket-column-chart"></div>
+                    <script id="ticket-chart-labels" type="application/json">{{ ticket_chart_labels|safe }}</script>
+                    <script id="ticket-created-counts" type="application/json">{{ ticket_created_counts|safe }}</script>
                 </div>
-            </div>
-        </div>
-        <div class="mt-2 pt-2 dark:border-base-700">
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
-                {% for status in ticket_status_counts %}
-                    <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-base-700 dark:bg-base-800">
-                        <div class="truncate text-sm text-font-subtle-light dark:text-font-subtle-dark">{{ status.name }}</div>
-                        <div class="mt-1 text-2xl font-semibold text-font-important-light dark:text-font-important-dark">
-                            {{ status.ticket_count }}
+            {% endif %}
+            {% if perms.tasks.view_task %}
+                <!-- Task Summary -->
+                <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-base-700 dark:bg-base-900">
+                    <h2 class="mb-3 text-sm font-medium text-font-subtle-light dark:text-font-subtle-dark">{% trans "Total Tasks" %}</h2>
+                    <p class="mb-5 text-3xl font-semibold tracking-tight text-font-important-light dark:text-font-important-dark">
+                        {{ total_tasks }}
+                    </p>
+                    <div class="border-t border-gray-200 pt-4 dark:border-base-700">
+                        <h3 class="mb-4 text-sm font-medium text-font-subtle-light dark:text-font-subtle-dark">Tasks by Category</h3>
+                        <div class="flex flex-col gap-3">
+                            {% for category in task_category_counts %}
+                                <div class="flex items-center justify-between gap-3">
+                                    <span class="truncate text-sm text-font-default-light dark:text-font-default-dark">{{ category.name }}</span>
+                                    <span class="shrink-0 rounded-full bg-primary-50 px-3 py-1 text-sm font-semibold text-primary-600 dark:bg-primary-900/20">
+                                        {{ category.task_count }}
+                                    </span>
+                                </div>
+                            {% empty %}
+                                <p class="text-sm text-font-subtle-light dark:text-font-subtle-dark">No task categories found.</p>
+                            {% endfor %}
                         </div>
                     </div>
-                {% empty %}
-                    <p class="text-sm text-font-subtle-light dark:text-font-subtle-dark">No ticket statuses found.</p>
-                {% endfor %}
-            </div>
-        </div>
-
-        <!-- Web Management Reminders -->
-        <div>
-            <h2 class="mb-4 text-xl font-semibold text-font-important-light dark:text-font-important-dark">
-                Web Management Reminders
-            </h2>
-            <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
-                <!-- Domain Renewal Reminders -->
-                <div class="p-4">
-                    <div class="mb-4">
-                        <h3 class="text-base font-semibold text-orange-700 dark:text-orange-400">Domain Renewal</h3>
-                        <p class="text-sm text-orange-600 dark:text-orange-500">{{ domain_renewal_count }} domains need renewal attention.</p>
-                    </div>
-                    <div class="flex flex-col gap-3">
-                        {% for domain in domain_renewal_reminders %}
-                            <a href="{% url 'admin:web_management_domainmanager_change' domain.id %}"
-                               class="block rounded-xl border border-base-200/70 bg-base-50/40 p-4 transition hover:border-orange-400 hover:shadow-md dark:border-base-700 dark:bg-base-900/40">
-                                <div class="flex items-start justify-between gap-3">
-                                    <div class="min-w-0">
-                                        <p class="truncate text-sm font-semibold text-font-important-light dark:text-font-important-dark">
-                                            {{ domain.domain_name }}
-                                        </p>
-                                        <p class="mt-1 text-xs text-font-subtle-light dark:text-font-subtle-dark">
-                                            Registrar: {{ domain.registrar|default:"Not recorded" }}
-                                        </p>
-                                        <p class="mt-1 text-xs text-font-subtle-light dark:text-font-subtle-dark">Expiry: {{ domain.expiry_date }}</p>
-                                    </div>
-                                    <span class="shrink-0 rounded-full px-3 py-1 text-xs font-semibold {% if domain.renewal_priority == 'critical' %} bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 {% elif domain.renewal_priority == 'warning' %} bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 {% else %} bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 {% endif %} ">
-                                        {{ domain.days_until_expiry }} days
-                                    </span>
-                                </div>
-                            </a>
-                        {% empty %}
-                            <p class="text-sm text-font-subtle-light dark:text-font-subtle-dark">No domain renewal reminders.</p>
-                        {% endfor %}
-                    </div>
                 </div>
-                <!-- Monthly Form Testing Reminders -->
-                <div class="p-4">
-                    <div class="mb-4">
-                        <h3 class="text-base font-semibold text-blue-700 dark:text-blue-400">Monthly Form Testing</h3>
-                        <p class="text-sm text-blue-600 dark:text-blue-500">{{ form_test_count }} forms need testing.</p>
-                    </div>
-                    <div class="flex flex-col gap-3">
-                        {% for form in form_test_reminders %}
-                            <a href="{% url 'admin:web_management_webformmanager_change' form.id %}"
-                               class="block rounded-xl border border-base-200/70 bg-base-50/40 p-4 transition hover:border-blue-400 hover:shadow-md dark:border-base-700 dark:bg-base-900/40">
-                                <div class="flex items-start justify-between gap-3">
-                                    <div class="min-w-0">
-                                        <p class="truncate text-sm font-semibold text-font-important-light dark:text-font-important-dark">
-                                            {{ form.form_name }}
-                                        </p>
-                                        <p class="mt-1 text-xs text-font-subtle-light dark:text-font-subtle-dark">{{ form.webpage.domain.domain_name }}</p>
-                                        <p class="mt-1 text-xs text-font-subtle-light dark:text-font-subtle-dark">
-                                            Last tested:
-                                            {% if form.last_tested_date %}
-                                                {{ form.last_tested_date }}
-                                            {% else %}
-                                                Never tested
-                                            {% endif %}
-                                        </p>
-                                    </div>
-                                    <span class="shrink-0 rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                                        Test
-                                    </span>
-                                </div>
-                            </a>
-                        {% empty %}
-                            <p class="text-sm text-font-subtle-light dark:text-font-subtle-dark">No form testing reminders.</p>
-                        {% endfor %}
-                    </div>
+            {% endif %}
+        </div>
+        {% if perms.tickets.view_supportticket %}
+            <div class="mt-2 pt-2 dark:border-base-700">
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
+                    {% for status in ticket_status_counts %}
+                        <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-base-700 dark:bg-base-800">
+                            <div class="truncate text-sm text-font-subtle-light dark:text-font-subtle-dark">{{ status.name }}</div>
+                            <div class="mt-1 text-2xl font-semibold text-font-important-light dark:text-font-important-dark">
+                                {{ status.ticket_count }}
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p class="text-sm text-font-subtle-light dark:text-font-subtle-dark">No ticket statuses found.</p>
+                    {% endfor %}
                 </div>
             </div>
-        </div>
+        {% endif %}
+        {% if perms.web_management.view_domainmanager %}
+            <!-- Web Management Reminders -->
+            <div>
+                <h2 class="mb-4 text-xl font-semibold text-font-important-light dark:text-font-important-dark">
+                    Web Management Reminders
+                </h2>
+                <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                    <!-- Domain Renewal Reminders -->
+                    <div class="p-4">
+                        <div class="mb-4">
+                            <h3 class="text-base font-semibold text-orange-700 dark:text-orange-400">Domain Renewal</h3>
+                            <p class="text-sm text-orange-600 dark:text-orange-500">{{ domain_renewal_count }} domains need renewal attention.</p>
+                        </div>
+                        <div class="flex flex-col gap-3">
+                            {% for domain in domain_renewal_reminders %}
+                                <a href="{% url 'admin:web_management_domainmanager_change' domain.id %}"
+                                   class="block rounded-xl border border-base-200/70 bg-base-50/40 p-4 transition hover:border-orange-400 hover:shadow-md dark:border-base-700 dark:bg-base-900/40">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="min-w-0">
+                                            <p class="truncate text-sm font-semibold text-font-important-light dark:text-font-important-dark">
+                                                {{ domain.domain_name }}
+                                            </p>
+                                            <p class="mt-1 text-xs text-font-subtle-light dark:text-font-subtle-dark">
+                                                Registrar: {{ domain.registrar|default:"Not recorded" }}
+                                            </p>
+                                            <p class="mt-1 text-xs text-font-subtle-light dark:text-font-subtle-dark">Expiry: {{ domain.expiry_date }}</p>
+                                        </div>
+                                        <span class="shrink-0 rounded-full px-3 py-1 text-xs font-semibold {% if domain.renewal_priority == 'critical' %} bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 {% elif domain.renewal_priority == 'warning' %} bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 {% else %} bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 {% endif %} ">
+                                            {{ domain.days_until_expiry }} days
+                                        </span>
+                                    </div>
+                                </a>
+                            {% empty %}
+                                <p class="text-sm text-font-subtle-light dark:text-font-subtle-dark">No domain renewal reminders.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <!-- Monthly Form Testing Reminders -->
+                    <div class="p-4">
+                        <div class="mb-4">
+                            <h3 class="text-base font-semibold text-blue-700 dark:text-blue-400">Monthly Form Testing</h3>
+                            <p class="text-sm text-blue-600 dark:text-blue-500">{{ form_test_count }} forms need testing.</p>
+                        </div>
+                        <div class="flex flex-col gap-3">
+                            {% for form in form_test_reminders %}
+                                <a href="{% url 'admin:web_management_webformmanager_change' form.id %}"
+                                   class="block rounded-xl border border-base-200/70 bg-base-50/40 p-4 transition hover:border-blue-400 hover:shadow-md dark:border-base-700 dark:bg-base-900/40">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="min-w-0">
+                                            <p class="truncate text-sm font-semibold text-font-important-light dark:text-font-important-dark">
+                                                {{ form.form_name }}
+                                            </p>
+                                            <p class="mt-1 text-xs text-font-subtle-light dark:text-font-subtle-dark">{{ form.webpage.domain.domain_name }}</p>
+                                            <p class="mt-1 text-xs text-font-subtle-light dark:text-font-subtle-dark">
+                                                Last tested:
+                                                {% if form.last_tested_date %}
+                                                    {{ form.last_tested_date }}
+                                                {% else %}
+                                                    Never tested
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                        <span class="shrink-0 rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                                            Test
+                                        </span>
+                                    </div>
+                                </a>
+                            {% empty %}
+                                <p class="text-sm text-font-subtle-light dark:text-font-subtle-dark">No form testing reminders.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+        {% if perms.tasks.view_dailytask %}
+            <div class="flex flex-col gap-4">
+                <div class="flex w-full flex-col gap-3 sm:flex-row sm:items-center">
+                    <div>
+                        <h2 class="text-xl font-semibold text-font-important-light dark:text-font-important-dark">My Daily Tasks</h2>
+                        <p class="mt-1 text-sm text-font-subtle-light dark:text-font-subtle-dark">Tasks assigned for today.</p>
+                    </div>
+                    <a href="{{ daily_task_changelist_url }}"
+                       class="inline-flex items-center justify-center rounded-default bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-700 sm:ml-auto">
+                        View All Daily Tasks
+                    </a>
+                </div>
+                {# Summary cards #}
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                    <div class="rounded-xl border border-base-200 bg-white p-4 shadow-sm dark:border-base-700 dark:bg-base-900">
+                        <p class="text-sm text-font-subtle-light dark:text-font-subtle-dark">Total</p>
+                        <p class="mt-2 text-2xl font-semibold text-font-important-light dark:text-font-important-dark">
+                            {{ daily_task_status_counts.total }}
+                        </p>
+                    </div>
+                    <div class="rounded-xl border border-base-200 bg-white p-4 shadow-sm dark:border-base-700 dark:bg-base-900">
+                        <p class="text-sm text-font-subtle-light dark:text-font-subtle-dark">Not Started</p>
+                        <p class="mt-2 text-2xl font-semibold text-font-important-light dark:text-font-important-dark">
+                            {{ daily_task_status_counts.not_started }}
+                        </p>
+                    </div>
+                    <div class="rounded-xl border border-base-200 bg-white p-4 shadow-sm dark:border-base-700 dark:bg-base-900">
+                        <p class="text-sm text-font-subtle-light dark:text-font-subtle-dark">In Progress</p>
+                        <p class="mt-2 text-2xl font-semibold text-font-important-light dark:text-font-important-dark">
+                            {{ daily_task_status_counts.in_progress }}
+                        </p>
+                    </div>
+                    <div class="rounded-xl border border-base-200 bg-white p-4 shadow-sm dark:border-base-700 dark:bg-base-900">
+                        <p class="text-sm text-font-subtle-light dark:text-font-subtle-dark">Completed</p>
+                        <p class="mt-2 text-2xl font-semibold text-font-important-light dark:text-font-important-dark">
+                            {{ daily_task_status_counts.completed }}
+                        </p>
+                    </div>
+                    <div class="rounded-xl border border-base-200 bg-white p-4 shadow-sm dark:border-base-700 dark:bg-base-900">
+                        <p class="text-sm text-font-subtle-light dark:text-font-subtle-dark">On Hold</p>
+                        <p class="mt-2 text-2xl font-semibold text-font-important-light dark:text-font-important-dark">
+                            {{ daily_task_status_counts.on_hold }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
     </div>
 {% endblock content %}

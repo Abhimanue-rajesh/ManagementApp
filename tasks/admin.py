@@ -3,8 +3,6 @@ import json
 from dateutil.relativedelta import relativedelta
 from django.contrib import admin, messages
 from django.contrib.auth import get_user_model
-
-# from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Q
 from django.db.models.functions import TruncMonth
 from django.http import HttpResponseRedirect
@@ -591,10 +589,10 @@ class DailyTaskAdmin(ModelAdmin):
     change_list_template = "tasks/daily_task_change_list.html"
 
     list_display = (
+        "title",
+        "brand",
         "task_date",
         "created_by",
-        "user",
-        "title",
         "status",
         "approval_status",
     )
@@ -625,6 +623,20 @@ class DailyTaskAdmin(ModelAdmin):
         "-task_date",
         "-created_at",
     )
+
+    class Media:
+        js = ("js/admin_row_click.js",)
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+
+        if request.user.is_superuser:
+            return queryset
+
+        if request.user.has_perm("tasks.view_all_dailytasks"):
+            return queryset
+
+        return queryset.filter(user=request.user)
 
     def get_urls(self):
         custom_urls = [

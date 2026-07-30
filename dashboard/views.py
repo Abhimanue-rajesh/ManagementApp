@@ -3,9 +3,10 @@ import json
 from dateutil.relativedelta import relativedelta
 from django.db.models import Count
 from django.db.models.functions import TruncMonth
+from django.urls import reverse
 from django.utils import timezone
 
-from tasks.models import Task, TaskCategory
+from tasks.models import DailyTask, Task, TaskCategory
 from tickets.models import SupportTicket, TicketStatus
 from web_management.models import DomainManager, WebFormManager
 
@@ -65,6 +66,26 @@ def dashboard_callback(request, context):
         ticket_count=Count("tickets")
     ).order_by("name")
 
+    daily_tasks_queryset = DailyTask.objects.select_related(
+        "user",
+        "brand",
+        "created_by",
+    )
+
+    if not request.user.is_superuser:
+        daily_tasks_queryset = daily_tasks_queryset.filter(user=request.user)
+
+    today_daily_tasks = daily_tasks_queryset.filter(task_date=today).order_by(
+        "-created_at"
+    )
+
+    daily_task_status_counts = {
+        "total": today_daily_tasks.count(),
+        "not_started": today_daily_tasks.filter(status="not_started").count(),
+        "in_progress": today_daily_tasks.filter(status="in_progress").count(),
+        "completed": today_daily_tasks.filter(status="completed").count(),
+        "on_hold": today_daily_tasks.filter(status="on_hold").count(),
+    }
     context.update(
         {
             "ticket_chart_labels": json.dumps(month_labels),
@@ -79,6 +100,8 @@ def dashboard_callback(request, context):
             "form_test_reminders": form_test_reminders,
             "form_test_count": len(form_test_reminders),
             "ticket_status_counts": ticket_status_counts,
+            "daily_task_status_counts": daily_task_status_counts,
+            "daily_task_changelist_url": reverse("admin:tasks_dailytask_changelist"),
         }
     )
 
