@@ -1,66 +1,12 @@
 from django.templatetags.static import static
 from django.urls import reverse_lazy
 
-
-def group_permission(*group_names):
-    """
-    Allow access to authenticated superusers or users belonging
-    to any of the supplied groups.
-    """
-
-    def check(request):
-        user = request.user
-
-        return user.is_authenticated and (
-            user.is_superuser or user.groups.filter(name__in=group_names).exists()
-        )
-
-    return check
-
-
-def can_manage_users(request):
-    user = request.user
-
-    return user.is_authenticated and (
-        user.is_superuser or user.has_perm("auth.view_user")
-    )
-
-
-def can_manage_groups(request):
-    user = request.user
-
-    return user.is_authenticated and (
-        user.is_superuser or user.has_perm("auth.view_group")
-    )
-
-
-can_view_support_tickets = group_permission(
-    "Support Ticket Users",
-    "Support Ticket Managers",
+from core.settings.permissions import (
+    assigner_view_all_daily_tasks,
+    can_view_main_dashboard,
+    can_view_task_dashboard,
+    view_only_workers_task,
 )
-
-can_view_credentials = group_permission(
-    "Credential Managers",
-)
-
-can_view_tasks = group_permission(
-    "Task Users",
-    "Task Managers",
-)
-
-can_view_daily_tasks = group_permission(
-    "Daily Task Users",
-    "Daily Task Managers",
-)
-
-can_view_web_management = group_permission(
-    "Web Management",
-)
-
-can_view_subscriptions = group_permission(
-    "Subscription Managers",
-)
-
 
 UNFOLD = {
     "DASHBOARD_CALLBACK": "dashboard.views.dashboard_callback",
@@ -68,7 +14,6 @@ UNFOLD = {
     "SITE_HEADER": "Internal Application",
     "SITE_SUBHEADER": "The Deep Seafood",
     "SHOW_BACK_BUTTON": True,
-    # "THEME": "dark",
     "SCRIPTS": [
         lambda request: static("js/main.js"),
     ],
@@ -82,18 +27,23 @@ UNFOLD = {
                         "title": "Dashboard",
                         "icon": "dashboard",
                         "link": reverse_lazy("admin:index"),
+                        "permission": can_view_main_dashboard,
                     },
                     {
                         "title": "Credentials",
                         "icon": "key",
                         "link": reverse_lazy("admin:credentials_credential_changelist"),
-                        "permission": can_view_credentials,
+                        "permission": lambda request: request.user.has_perm(
+                            "credentials.view_credential"
+                        ),
                     },
                     {
                         "title": "Quick Copy",
                         "icon": "content_copy",
                         "link": reverse_lazy("admin:quickcopy_quickcopy_changelist"),
-                        "permission": can_view_credentials,
+                        "permission": lambda request: request.user.has_perm(
+                            "quickcopy.view_quickcopy"
+                        ),
                     },
                 ],
             },
@@ -106,37 +56,51 @@ UNFOLD = {
                         "title": "Tasks Dashboard",
                         "icon": "folder_open",
                         "link": reverse_lazy("admin:tasks_dashboard"),
-                        "permission": can_view_tasks,
+                        "permission": can_view_task_dashboard,
                     },
                     {
-                        "title": "Daily Tasks",
+                        "title": "All Daily Tasks",
                         "icon": "today",
                         "link": reverse_lazy("admin:daily_task_dashboard"),
-                        "permission": can_view_daily_tasks,
+                        "permission": assigner_view_all_daily_tasks,
+                    },
+                    {
+                        "title": "My Daily Tasks",
+                        "icon": "today",
+                        "link": reverse_lazy("admin:tasks_dailytask_changelist"),
+                        "permission": view_only_workers_task,
                     },
                     {
                         "title": "Brands",
                         "icon": "sell",
                         "link": reverse_lazy("admin:tasks_brand_changelist"),
-                        "permission": can_view_tasks,
+                        "permission": lambda request: request.user.has_perm(
+                            "tasks.view_brand"
+                        ),
                     },
                     {
                         "title": "Task Categories",
                         "icon": "inventory_2",
                         "link": reverse_lazy("admin:tasks_taskcategory_changelist"),
-                        "permission": can_view_tasks,
+                        "permission": lambda request: request.user.has_perm(
+                            "tasks.view_taskcategory"
+                        ),
                     },
                     {
                         "title": "Departments",
                         "icon": "apartment",
                         "link": reverse_lazy("admin:tasks_department_changelist"),
-                        "permission": can_view_tasks,
+                        "permission": lambda request: request.user.has_perm(
+                            "tasks.view_department"
+                        ),
                     },
                     {
                         "title": "Project Types",
                         "icon": "account_tree",
                         "link": reverse_lazy("admin:tasks_projecttype_changelist"),
-                        "permission": can_view_tasks,
+                        "permission": lambda request: request.user.has_perm(
+                            "tasks.view_projecttype"
+                        ),
                     },
                 ],
             },
@@ -149,7 +113,9 @@ UNFOLD = {
                         "title": "All Tickets",
                         "icon": "confirmation_number",
                         "link": reverse_lazy("admin:tickets_supportticket_changelist"),
-                        "permission": can_view_support_tickets,
+                        "permission": lambda request: request.user.has_perm(
+                            "tickets.view_supportticket"
+                        ),
                     },
                     {
                         "title": "Ticket History",
@@ -157,19 +123,25 @@ UNFOLD = {
                         "link": reverse_lazy(
                             "admin:tickets_supporttickethistory_changelist"
                         ),
-                        "permission": can_view_support_tickets,
+                        "permission": lambda request: request.user.has_perm(
+                            "tickets.view_supporttickethistory"
+                        ),
                     },
                     {
                         "title": "Ticket Routings",
                         "icon": "route",
                         "link": reverse_lazy("admin:tickets_ticketrouting_changelist"),
-                        "permission": can_view_support_tickets,
+                        "permission": lambda request: request.user.has_perm(
+                            "tickets.view_ticketrouting"
+                        ),
                     },
                     {
                         "title": "Ticket Statuses",
                         "icon": "flag",
                         "link": reverse_lazy("admin:tickets_ticketstatus_changelist"),
-                        "permission": can_view_support_tickets,
+                        "permission": lambda request: request.user.has_perm(
+                            "tickets.view_ticketstatus"
+                        ),
                     },
                 ],
             },
@@ -184,7 +156,9 @@ UNFOLD = {
                         "link": reverse_lazy(
                             "admin:subscriptions_subscriptiontracker_changelist"
                         ),
-                        "permission": can_view_subscriptions,
+                        "permission": lambda request: request.user.has_perm(
+                            "subscriptions.view_subscriptiontracker"
+                        ),
                     },
                     {
                         "title": "Payment Cards",
@@ -192,13 +166,17 @@ UNFOLD = {
                         "link": reverse_lazy(
                             "admin:subscriptions_paymentcard_changelist"
                         ),
-                        "permission": can_view_subscriptions,
+                        "permission": lambda request: request.user.has_perm(
+                            "subscriptions.view_paymentcard"
+                        ),
                     },
                     {
                         "title": "Currencies",
                         "icon": "currency_exchange",
                         "link": reverse_lazy("admin:subscriptions_currency_changelist"),
-                        "permission": can_view_subscriptions,
+                        "permission": lambda request: request.user.has_perm(
+                            "subscriptions.view_currency"
+                        ),
                     },
                     {
                         "title": "Payment Timings",
@@ -206,7 +184,9 @@ UNFOLD = {
                         "link": reverse_lazy(
                             "admin:subscriptions_paymenttiming_changelist"
                         ),
-                        "permission": can_view_subscriptions,
+                        "permission": lambda request: request.user.has_perm(
+                            "subscriptions.view_paymenttiming"
+                        ),
                     },
                 ],
             },
@@ -221,7 +201,9 @@ UNFOLD = {
                         "link": reverse_lazy(
                             "admin:web_management_domainmanager_changelist"
                         ),
-                        "permission": can_view_web_management,
+                        "permission": lambda request: request.user.has_perm(
+                            "web_management.view_domainmanager"
+                        ),
                     },
                     {
                         "title": "Domain Registrars",
@@ -229,7 +211,9 @@ UNFOLD = {
                         "link": reverse_lazy(
                             "admin:web_management_registrar_changelist"
                         ),
-                        "permission": can_view_web_management,
+                        "permission": lambda request: request.user.has_perm(
+                            "web_management.view_registrar"
+                        ),
                     },
                     {
                         "title": "Web Pages and Forms",
@@ -237,13 +221,17 @@ UNFOLD = {
                         "link": reverse_lazy(
                             "admin:web_management_webpagemanager_changelist"
                         ),
-                        "permission": can_view_web_management,
+                        "permission": lambda request: request.user.has_perm(
+                            "web_management.view_webpagemanager"
+                        ),
                     },
                     {
                         "title": "DNS Zones",
                         "icon": "dns",
                         "link": reverse_lazy("admin:web_management_dnszone_changelist"),
-                        "permission": can_view_web_management,
+                        "permission": lambda request: request.user.has_perm(
+                            "web_management.view_dnszone"
+                        ),
                     },
                 ],
             },
@@ -256,13 +244,23 @@ UNFOLD = {
                         "title": "Users",
                         "icon": "person",
                         "link": reverse_lazy("admin:auth_user_changelist"),
-                        "permission": can_manage_users,
+                        "permission": lambda request: request.user.has_perm(
+                            "auth.view_user"
+                        ),
                     },
                     {
                         "title": "Groups and Permissions",
                         "icon": "admin_panel_settings",
                         "link": reverse_lazy("admin:auth_group_changelist"),
-                        "permission": can_manage_groups,
+                        "permission": lambda request: request.user.has_perm(
+                            "auth.view_group"
+                        ),
+                    },
+                    {
+                        "title": "Group Members",
+                        "icon": "groups",
+                        "link": reverse_lazy("group_members_dashboard"),
+                        "permission": lambda request: request.user.is_superuser,
                     },
                 ],
             },

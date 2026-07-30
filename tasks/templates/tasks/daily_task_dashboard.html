@@ -15,16 +15,18 @@
                     Select a user to view their daily task updates.
                 </p>
             </div>
-            <div class="flex items-center gap-3">
-                <a href="{% url 'admin:tasks_dailytask_add' %}"
-                   class="rounded-default bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-700">
-                    Assign a Daily Task
-                </a>
-                <a href="{{ daily_task_list_url }}"
-                   class="rounded-default bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-700">
-                    View All Daily Tasks
-                </a>
-            </div>
+            {% if perms.tasks.add_dailytask %}
+                <div class="flex items-center gap-3">
+                    <a href="{% url 'admin:tasks_dailytask_add' %}"
+                       class="rounded-default bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-700">
+                        Assign a Daily Task
+                    </a>
+                    <a href="{{ daily_task_list_url }}"
+                       class="rounded-default bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-700">
+                        View All Daily Tasks
+                    </a>
+                </div>
+            {% endif %}
         </div>
         <div class="border border-base-200 dark:border-base-800 rounded-default overflow-hidden">
             <div class="overflow-x-auto">
@@ -92,7 +94,7 @@
                             <tr class="bg-white dark:bg-base-900">
                                 <td colspan="4"
                                     class="px-4 py-10 text-center text-sm text-font-subtle-light dark:text-font-subtle-dark">
-                                    No users are assigned to the Daily Task Users group.
+                                    No users are assigned to the Daily Task Workers group.
                                 </td>
                             </tr>
                         {% endfor %}

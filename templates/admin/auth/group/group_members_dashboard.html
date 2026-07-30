@@ -1,0 +1,56 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+    <div class="flex flex-col gap-6">
+        <div>
+            <h1 class="text-2xl font-semibold text-font-important-light dark:text-font-important-dark">Group Members</h1>
+            <p class="mt-1 text-sm text-font-subtle-light dark:text-font-subtle-dark">View all groups and their assigned users.</p>
+        </div>
+        <div class="overflow-hidden rounded-default border border-base-200 bg-white dark:border-base-800 dark:bg-base-900">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-base-200 dark:border-base-800">
+                        <th class="px-4 py-3 text-left">Group</th>
+                        <th class="px-4 py-3 text-left">Members</th>
+                        <th class="px-4 py-3 text-left">Users</th>
+                        <th class="px-4 py-3 text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for group in groups %}
+                        <tr class="border-b border-base-100 dark:border-base-800">
+                            <td class="px-4 py-4">
+                                <span class="font-medium text-font-important-light dark:text-font-important-dark">{{ group.name }}</span>
+                            </td>
+                            <td class="px-4 py-4">{{ group.user_set.count }}</td>
+                            <td class="px-4 py-4">
+                                <div class="flex flex-col gap-1">
+                                    {% for user in group.user_set.all %}
+                                        <a href="{% url 'admin:auth_user_change' user.pk %}"
+                                           class="text-primary-600 hover:underline">
+                                            {{ user.get_full_name|default:user.username }}
+                                        </a>
+                                    {% empty %}
+                                        <span class="text-font-subtle-light dark:text-font-subtle-dark">No users assigned</span>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            <td class="px-4 py-4 text-right">
+                                <a href="{% url 'admin:auth_group_change' group.pk %}"
+                                   class="rounded-default border border-base-200 px-3 py-2 text-sm font-medium hover:bg-base-50 dark:border-base-700 dark:hover:bg-base-800">
+                                    Edit Group
+                                </a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4"
+                                class="px-4 py-10 text-center text-font-subtle-light dark:text-font-subtle-dark">
+                                No groups found.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock content %}

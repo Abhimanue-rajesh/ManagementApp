@@ -3,7 +3,8 @@ import json
 from dateutil.relativedelta import relativedelta
 from django.contrib import admin, messages
 from django.contrib.auth import get_user_model
-from django.core.exceptions import PermissionDenied
+
+# from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Q
 from django.db.models.functions import TruncMonth
 from django.http import HttpResponseRedirect
@@ -543,7 +544,7 @@ class DailyTaskDashboard(UnfoldModelAdminViewMixin, TemplateView):
 
         users = (
             User.objects.filter(
-                groups__name="Daily Task Users",
+                groups__name="Daily Task Workers",
                 is_active=True,
             )
             .annotate(
@@ -645,9 +646,7 @@ class DailyTaskAdmin(ModelAdmin):
 
     def changelist_view(self, request, extra_context=None):
         extra_context = extra_context or {}
-
         filtered_user_id = request.GET.get("user__id__exact")
-
         filtered_user = None
 
         if filtered_user_id:
@@ -655,30 +654,20 @@ class DailyTaskAdmin(ModelAdmin):
                 pk=filtered_user_id,
                 is_active=True,
             ).first()
-
         extra_context.update(
             {
                 "filtered_user": filtered_user,
                 "filtered_user_id": filtered_user_id,
-                "daily_task_users": User.objects.filter(
-                    groups__name="Daily Task Users",
-                    is_active=True,
-                )
-                .distinct()
-                .order_by("first_name", "username"),
                 "brands": Brand.objects.all().order_by("name"),
                 "quick_add_url": reverse("admin:tasks_dailytask_quick_add"),
             }
         )
-
         return super().changelist_view(
             request,
             extra_context=extra_context,
         )
 
     def quick_add_daily_task(self, request):
-        if not self.has_add_permission(request):
-            raise PermissionDenied
 
         if request.method != "POST":
             return HttpResponseRedirect(reverse("admin:tasks_dailytask_changelist"))
@@ -688,7 +677,6 @@ class DailyTaskAdmin(ModelAdmin):
         description = request.POST.get("description", "").strip()
         brand_id = request.POST.get("brand")
         status = request.POST.get("status", "not_started")
-
         redirect_url = reverse("admin:tasks_dailytask_changelist")
 
         if user_id:
@@ -734,17 +722,6 @@ class DailyTaskAdmin(ModelAdmin):
         )
 
         return HttpResponseRedirect(redirect_url)
-
-    def get_queryset(self, request):
-        queryset = super().get_queryset(request)
-
-        if request.user.is_superuser:
-            return queryset
-
-        if request.user.has_perm("tasks.change_dailytask"):
-            return queryset
-
-        return queryset.filter(user=request.user)
 
     def save_model(self, request, obj, form, change):
         if not obj.pk:
