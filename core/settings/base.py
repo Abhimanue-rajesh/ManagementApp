@@ -29,6 +29,7 @@ INSTALLED_APPS = [
 
 # Add External Apps Here
 EXTERNAL_APPS = [
+    "django_lumen",
     "tasks.apps.TasksConfig",
     "tickets.apps.TicketsConfig",
     "web_management.apps.WebManagementConfig",

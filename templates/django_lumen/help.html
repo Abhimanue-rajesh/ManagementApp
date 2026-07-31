@@ -1,0 +1,219 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Model Visualizer — Help</title>
+  <link rel="stylesheet" href="{% static 'django_lumen/css/django_lumen.css' %}">
+</head>
+<body class="page-help">
+
+<header>
+  Model Visualizer
+  <a href="{% url 'django-lumen-diagram' %}">&larr; Back to diagram</a>
+  <a href="{% url 'admin:index' %}" class="lumen-back-btn">
+    ← Back to Admin
+  </a>
+</header>
+
+
+<div class="container">
+  <h1>How to use the diagram</h1>
+  <p class="subtitle">A quick reference for navigating and customising the ERD view.</p>
+
+  <!-- Navigation -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon icon-blue">🧭</div>
+      <span class="section-title">Navigation — zoom &amp; pan</span>
+    </div>
+    <table class="row-table">
+      <tr>
+        <td><span class="badge badge-scroll">Scroll wheel</span></td>
+        <td>Zoom in / out around the cursor position.</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-drag">Drag</span> on empty canvas</td>
+        <td>Pan the diagram in any direction.</td>
+      </tr>
+      <tr>
+        <td>
+          <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>
+        </td>
+        <td>Pan the canvas with the keyboard arrow keys (120 px per press; hold for continuous scroll).</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Focus mode -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon icon-violet">🔍</div>
+      <span class="section-title">Focus mode — isolating a table</span>
+    </div>
+    <table class="row-table">
+      <tr>
+        <td><span class="badge badge-click">Click</span> table header</td>
+        <td>
+          Enters focus mode: the selected table and all its directly related tables
+          are highlighted; everything else is dimmed. The viewport automatically
+          zooms in to fit the visible group.
+        </td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-click">Click</span> a related table header</td>
+        <td>Switches focus to that table and its neighbours.</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-click">Click</span> the focused table header again</td>
+        <td>Clears focus mode and zooms back out to the full diagram.</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Model detail -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon icon-sky">📋</div>
+      <span class="section-title">Table detail view</span>
+    </div>
+    <table class="row-table">
+      <tr>
+        <td><span class="badge badge-dclick">Double-click</span> field list</td>
+        <td>
+          Opens a detail panel for that table showing each field's verbose name,
+          help text, and available choices (for <code>TextChoices</code> /
+          <code>IntegerChoices</code> fields), followed by a full list of
+          database indexes and constraints.
+        </td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-click">Click ×</span> or <kbd>Esc</kbd></td>
+        <td>Closes the detail panel. Clicking outside the panel also closes it.</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- App filter -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon icon-green">🏷️</div>
+      <span class="section-title">App filter — sidebar chips</span>
+    </div>
+    <table class="row-table">
+      <tr>
+        <td><span class="badge badge-click">Click</span> an app chip</td>
+        <td>
+          Filters the diagram to show only tables belonging to the selected app(s)
+          plus any tables they have direct relations to. Click again to deselect.
+          When no chips are selected, all tables are shown.
+        </td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-rclick">Right-click</span> an app chip</td>
+        <td>
+          Marks the app as <em>excluded</em> (shown in red with strikethrough).
+          Excluded apps are completely hidden from the diagram. Right-click again
+          to un-exclude. Preferences are saved automatically.
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Line routing -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon icon-amber">↗️</div>
+      <span class="section-title">Line routing styles</span>
+    </div>
+    <table class="row-table">
+      <tr>
+        <td><strong>Curved</strong> <em>(default)</em></td>
+        <td>S-shaped Bézier curves between tables.</td>
+      </tr>
+      <tr>
+        <td><strong>Orthogonal</strong></td>
+        <td>Right-angle routing; parallel trunks are offset to avoid overlap.</td>
+      </tr>
+      <tr>
+        <td><strong>Oblique</strong></td>
+        <td>Lines exit horizontally then connect diagonally to the target.</td>
+      </tr>
+      <tr>
+        <td><strong>Direct</strong></td>
+        <td>Straight lines from port to port.</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Preferences & settings -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon icon-rose">⚙️</div>
+      <span class="section-title">Preferences &amp; settings</span>
+    </div>
+    <table class="row-table">
+      <tr>
+        <td><strong>Managed tables only</strong></td>
+        <td>
+          When checked, models with <code>managed = False</code> in their
+          <code>Meta</code> class are hidden from the diagram.
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Show inheritance</strong></td>
+        <td>
+          When checked, each model box shows its parent class(es) below the model
+          name. The default Django base (<code>models.Model</code>) is not shown —
+          only custom application-level parents are displayed.
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Excluded models</strong></td>
+        <td>
+          A list of regex patterns matched against model names. Any model whose
+          name matches at least one pattern is hidden from the diagram. Patterns
+          use Python <code>re.search</code> — use <code>^</code> / <code>$</code>
+          to anchor. Examples: <code>^Historical</code>, <code>Log$</code>,
+          <code>Audit</code>.
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Excluded apps</strong></td>
+        <td>
+          Entire apps can be permanently hidden from the diagram using checkboxes.
+          By default the system apps (<code>auth</code>, <code>admin</code>,
+          <code>sessions</code>, <code>contenttypes</code>,
+          <code>django_lumen</code>) are excluded.
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Relation colour legend -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon icon-blue">🎨</div>
+      <span class="section-title">Relation colours</span>
+    </div>
+    <table class="row-table">
+      <tr>
+        <td><span class="colour-swatch legend-line-fk"></span><strong>Indigo</strong></td>
+        <td>ForeignKey</td>
+      </tr>
+      <tr>
+        <td><span class="colour-swatch legend-line-o2o"></span><strong>Green</strong></td>
+        <td>OneToOneField</td>
+      </tr>
+      <tr>
+        <td><span class="colour-swatch legend-line-m2m"></span><strong>Amber</strong></td>
+        <td>ManyToManyField</td>
+      </tr>
+    </table>
+  </div>
+
+</div>
+
+</body>
+</html>

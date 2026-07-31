@@ -1,5 +1,5 @@
 from django.templatetags.static import static
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 
 from core.settings.permissions import (
     assigner_view_all_daily_tasks,
@@ -261,6 +261,18 @@ UNFOLD = {
                         "icon": "groups",
                         "link": reverse_lazy("group_members_dashboard"),
                         "permission": lambda request: request.user.is_superuser,
+                    },
+                ],
+            },
+            {
+                "title": ("Developer Tools"),
+                "collapsible": True,
+                "separator": True,
+                "items": [
+                    {
+                        "title": ("Model Visualizer"),
+                        "icon": "hub",
+                        "link": lambda request: reverse("django-lumen-diagram"),
                     },
                 ],
             },

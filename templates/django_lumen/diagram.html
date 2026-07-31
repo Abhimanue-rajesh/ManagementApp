@@ -1,0 +1,707 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <meta name="save-prefs-url" content="{% url 'django-lumen-save-preferences' %}">
+  <title>Model Visualizer</title>
+  <link rel="stylesheet" href="{% static 'django_lumen/css/django_lumen.css' %}">
+</head>
+<body class="page-diagram">
+  <header>Model Visualizer <a href="{% url 'admin:index' %}" class="lumen-back-btn">
+    ← Back to Admin
+  </a></header>
+  <div id="main">
+    <div id="sidebar">
+      <div id="filter-bar">
+        <label>Apps</label>
+        {# chips populated by JS #}
+      </div>
+
+      <div id="routing-bar">
+        <label>Line routing</label>
+        <select id="routing-select" class="sidebar-select">
+          <option value="orthogonal">Orthogonal</option>
+          <option value="direct">Direct</option>
+          <option value="oblique">Oblique</option>
+          <option value="curved" selected>Curved</option>
+        </select>
+      </div>
+
+      <div class="legend">
+        <strong>Relations</strong>
+        <div class="legend-item">
+          <div class="legend-line legend-line-fk"></div> ForeignKey
+        </div>
+        <div class="legend-item">
+          <div class="legend-line legend-line-o2o"></div> OneToOneField
+        </div>
+        <div class="legend-item">
+          <div class="legend-line legend-line-m2m"></div> ManyToManyField
+        </div>
+      </div>
+
+      <div class="sidebar-links">
+        <a href="{% url 'django-lumen-settings' %}" class="sidebar-link">Settings</a>
+        <a href="{% url 'django-lumen-help' %}" class="sidebar-link">Help</a>
+      </div>
+    </div>
+
+    <div id="viewport">
+      <div id="stage">
+        <svg id="lines"></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="hint">Scroll to zoom &middot; Drag to pan &middot; Double-click table to inspect &middot; Right-click app to exclude</div>
+
+  <div id="detail-overlay" class="detail-overlay" hidden>
+    <div id="detail-panel" class="detail-panel">
+      <div class="detail-header">
+        <div class="detail-header-title">
+          <span id="detail-app-badge" class="detail-app-badge"></span>
+          <span id="detail-title"></span>
+        </div>
+        <button id="detail-close" class="detail-close" aria-label="Close">&times;</button>
+      </div>
+      <div id="detail-body" class="detail-body"></div>
+    </div>
+  </div>
+
+  {# JSON payloads — model names are safe Python identifiers, no XSS risk #}
+  <script type="application/json" id="diagram-data">{{ diagram_data|safe }}</script>
+  <script type="application/json" id="diagram-prefs">{{ prefs|safe }}</script>
+
+  <script>
+    const DATA   = JSON.parse(document.getElementById('diagram-data').textContent);
+    const MODELS = DATA.models;
+    const PREFS  = JSON.parse(document.getElementById('diagram-prefs').textContent);
+    const CSRF   = document.querySelector('meta[name="csrf-token"]').content;
+
+    // ── Constants (match CSS pixel values exactly) ───────────────────────────
+    const MODEL_W     = 240;
+    const HEADER_H    = 32;
+    const FIELD_H     = 26;
+    const GAP_X       = 80;   // gap between model columns within a group
+    const GAP_Y       = 50;   // gap between model rows within a group
+    const PADDING     = 40;   // outer canvas margin
+    const APP_LABEL_H = 28;   // group label strip height
+    const APP_PADDING = 20;   // inner padding around models within a group
+    const APP_GAP_X   = 16;   // horizontal gap between app groups
+    const APP_GAP_Y   = 30;   // vertical gap between app groups
+
+    const COLORS = {
+      ForeignKey:      '#6366f1',
+      OneToOneField:   '#10b981',
+      ManyToManyField: '#f59e0b',
+    };
+    const KIND_CLASS = {
+      ForeignKey:      'field-fk',
+      OneToOneField:   'field-o2o',
+      ManyToManyField: 'field-m2m',
+    };
+
+    function inheritH(model) {
+      if (!showInheritance || !model.inherits || model.inherits.length === 0) return 0;
+      const text     = model.inherits.map(k => k.split('.').pop()).join(', ');
+      const availW   = MODEL_W - 20;   // 10px padding each side
+      const charW    = 6.5;            // approximate px per char at 0.72rem
+      const lines    = Math.max(1, Math.ceil(text.length * charW / availW));
+      return lines * FIELD_H;
+    }
+    function modelH(model) { return HEADER_H + inheritH(model) + model.fields.length * FIELD_H; }
+
+    // ── Adjacency built once from ALL models ─────────────────────────────────
+    // model.key = "app_label.ModelName" — unique even when two apps share a class name
+    const adjacency = {};
+    MODELS.forEach(m => { adjacency[m.key] = new Set(); });
+    MODELS.forEach(model => {
+      model.fields.forEach(field => {
+        if (!field.relation || !adjacency[field.relation.to]) return;
+        adjacency[model.key].add(field.relation.to);
+        adjacency[field.relation.to].add(model.key);
+      });
+    });
+
+    // ── DOM references ───────────────────────────────────────────────────────
+    const stage    = document.getElementById('stage');
+    const svg      = document.getElementById('lines');
+    const viewport = document.getElementById('viewport');
+
+    // Build SVG marker definitions — filled triangle arrowhead per relation kind
+    function buildDefs() {
+      const d = [];
+      Object.entries(COLORS).forEach(([kind, c]) => {
+        d.push(`<marker id="arrow-${kind}" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0,8 3,0 6" fill="${c}"/></marker>`);
+      });
+      return `<defs>${d.join('')}</defs>`;
+    }
+    svg.innerHTML = buildDefs();
+    const appGroupsEl = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    appGroupsEl.id = 'app-groups';
+    svg.appendChild(appGroupsEl);
+
+    // ── Mutable render state ─────────────────────────────────────────────────
+    let boxEls           = {};    // rebuilt on each renderDiagram call
+    let focusedModel     = null;
+    let routingStyle     = PREFS.routing_style || 'curved';
+    let currentModels    = [];
+    let currentPositions = {};
+
+    // ── drawLines(models, positions) ─────────────────────────────────────────
+    // Redraws only the SVG paths; can be called without re-laying out boxes.
+    function drawLines(models, positions) {
+      svg.querySelectorAll('path').forEach(p => p.remove());
+
+      // Pass 1: collect
+      const connections = [];
+      models.forEach(model => {
+        model.fields.forEach((field, fieldIdx) => {
+          if (!field.relation) return;
+          const toKey = field.relation.to;
+          if (!positions[toKey]) return;
+          const fp      = positions[model.key];
+          const tp      = positions[toKey];
+          const goRight = (tp.x + MODEL_W / 2) >= (fp.x + MODEL_W / 2);
+          connections.push({
+            fromModel: model.key,
+            toModel:   toKey,
+            field,
+            x1: goRight ? fp.x + MODEL_W : fp.x,
+            x2: goRight ? tp.x           : tp.x + MODEL_W,
+            y1: fp.y + HEADER_H + inheritH(model) + fieldIdx * FIELD_H + FIELD_H / 2,
+            goRight,
+          });
+        });
+      });
+
+      // Pass 2a: spread arrival y2 per (target model × entry side)
+      const ENTRY_PAD   = 6;
+      const incomingMap = {};
+      connections.forEach(conn => {
+        (incomingMap[`${conn.toModel}:${conn.goRight ? 'L' : 'R'}`] ??= []).push(conn);
+      });
+      Object.entries(incomingMap).forEach(([key, group]) => {
+        const toKey = key.slice(0, key.lastIndexOf(':'));
+        const tp    = positions[toKey];
+        const h     = modelH(models.find(m => m.key === toKey));
+        group.forEach((conn, i) => {
+          conn.y2 = group.length === 1
+            ? tp.y + HEADER_H / 2
+            : tp.y + ENTRY_PAD + (i / (group.length - 1)) * (h - 2 * ENTRY_PAD);
+        });
+      });
+
+      // Pass 2b: assign routing channels; offset parallel trunks (orthogonal only)
+      if (routingStyle === 'orthogonal') {
+        const TRUNK_SPACING = 8;
+        const trunkMap = {};
+        connections.forEach(conn => {
+          conn.cS = conn.goRight ? conn.x1 + GAP_X / 2 : conn.x1 - GAP_X / 2;
+          conn.cT = conn.goRight ? conn.x2 - GAP_X / 2 : conn.x2 + GAP_X / 2;
+          conn.isAdj = conn.cS === conn.cT;
+          (trunkMap[`${conn.x1}:${conn.x2}`] ??= []).push(conn);
+        });
+        Object.values(trunkMap).forEach(group => {
+          group.forEach((conn, i) => {
+            conn.offset = (i - (group.length - 1) / 2) * TRUNK_SPACING;
+          });
+        });
+      }
+
+      // Pass 3: draw
+      const HW_Y = PADDING / 2;
+      connections.forEach(conn => {
+        const { x1, y1, x2, y2 } = conn;
+        const midX = (x1 + x2) / 2;
+        let d;
+        if (routingStyle === 'direct') {
+          d = `M ${x1} ${y1} L ${x2} ${y2}`;
+        } else if (routingStyle === 'oblique') {
+          d = `M ${x1} ${y1} L ${midX} ${y1} L ${x2} ${y2}`;
+        } else if (routingStyle === 'curved') {
+          d = `M ${x1} ${y1} C ${midX} ${y1} ${midX} ${y2} ${x2} ${y2}`;
+        } else {
+          // orthogonal (default)
+          const sX = conn.cS + conn.offset;
+          const tX = conn.cT + conn.offset;
+          d = conn.isAdj
+            ? `M ${x1} ${y1} H ${sX} V ${y2} H ${x2}`
+            : `M ${x1} ${y1} H ${sX} V ${HW_Y} H ${tX} V ${y2} H ${x2}`;
+        }
+        const kind = conn.field.relation.kind;
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d',            d);
+        path.setAttribute('fill',         'none');
+        path.setAttribute('stroke',       COLORS[kind] ?? '#94a3b8');
+        path.setAttribute('stroke-width', '1.5');
+        path.setAttribute('marker-end',   `url(#arrow-${kind})`);
+        path.dataset.from = conn.fromModel;
+        path.dataset.to   = conn.toModel;
+        svg.appendChild(path);
+      });
+    }
+
+    // ── layoutAppGroup(models) ───────────────────────────────────────────────
+    // Computes local positions (relative to group top-left) and group dimensions.
+    function layoutAppGroup(models) {
+      const cols       = Math.max(1, Math.ceil(Math.sqrt(models.length * 0.75)));
+      const colHeights = new Array(cols).fill(APP_LABEL_H + APP_PADDING);
+      const local      = {};
+      models.forEach(model => {
+        const col = colHeights.indexOf(Math.min(...colHeights));
+        local[model.key] = {
+          x: APP_PADDING + col * (MODEL_W + GAP_X),
+          y: colHeights[col],
+        };
+        colHeights[col] += modelH(model) + GAP_Y;
+      });
+      const groupW = APP_PADDING * 2 + cols * MODEL_W + (cols - 1) * GAP_X;
+      const groupH = Math.max(...colHeights) + APP_PADDING;
+      return { local, groupW, groupH };
+    }
+
+    // ── drawAppGroups(appOffsets, appLayouts, appList) ───────────────────────
+    function drawAppGroups(appOffsets, appLayouts, appList) {
+      const g = document.getElementById('app-groups');
+      g.innerHTML = '';
+      appList.forEach(app => {
+        const { x, y }          = appOffsets[app];
+        const { groupW, groupH } = appLayouts[app];
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x',            x);
+        rect.setAttribute('y',            y);
+        rect.setAttribute('width',        groupW);
+        rect.setAttribute('height',       groupH);
+        rect.setAttribute('rx',           '10');
+        rect.setAttribute('fill',         'transparent');
+        rect.setAttribute('stroke',       '#bfdbfe');
+        rect.setAttribute('stroke-width', '1.5');
+        g.appendChild(rect);
+
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x',              x + 12);
+        text.setAttribute('y',              y + 18);
+        text.setAttribute('font-size',      '18');
+        text.setAttribute('font-weight',    '700');
+        text.setAttribute('fill',           '#3b82f6');
+        text.setAttribute('letter-spacing', '1');
+        text.textContent = app.toUpperCase();
+        g.appendChild(text);
+      });
+    }
+
+    // ── renderDiagram(models) ────────────────────────────────────────────────
+    // Tears down all boxes/lines and rebuilds layout from scratch.
+    function renderDiagram(models) {
+      focusedModel = null;
+      stage.querySelectorAll('.model-box').forEach(el => el.remove());
+      svg.querySelectorAll('path').forEach(p => p.remove());
+      document.getElementById('app-groups').innerHTML = '';
+      boxEls = {};
+      currentModels    = models;
+      currentPositions = {};
+
+      if (models.length === 0) return;
+
+      // Group models by app
+      const byApp   = {};
+      models.forEach(m => (byApp[m.app] ??= []).push(m));
+      const appList = Object.keys(byApp).sort();
+
+      // Layout each app's models in local (group-relative) coordinates
+      const appLayouts = {};
+      appList.forEach(app => { appLayouts[app] = layoutAppGroup(byApp[app]); });
+
+      // Masonry layout of app groups on the canvas
+      const numAppCols = Math.max(1, Math.ceil(Math.sqrt(appList.length)));
+      const appColH    = new Array(numAppCols).fill(PADDING);
+      const appColApps = Array.from({ length: numAppCols }, () => []);
+      const appColIdx  = {};
+      const appOffsets = {};
+
+      // First pass: assign each app to the shortest column, record y
+      appList.forEach(app => {
+        const col = appColH.indexOf(Math.min(...appColH));
+        appColIdx[app] = col;
+        appOffsets[app] = { y: appColH[col] };
+        appColApps[col].push(app);
+        appColH[col] += appLayouts[app].groupH + APP_GAP_Y;
+      });
+
+      // Per-column x offsets based on each column's own widest group
+      const colX = [];
+      let xCursor = PADDING;
+      appColApps.forEach(apps => {
+        colX.push(xCursor);
+        const colW = apps.length ? Math.max(...apps.map(a => appLayouts[a].groupW)) : 0;
+        xCursor += colW + APP_GAP_X;
+      });
+
+      appList.forEach(app => {
+        appOffsets[app].x = colX[appColIdx[app]];
+      });
+
+      // Convert local positions to absolute canvas positions
+      appList.forEach(app => {
+        const { x: ox, y: oy } = appOffsets[app];
+        Object.entries(appLayouts[app].local).forEach(([key, pos]) => {
+          currentPositions[key] = { x: ox + pos.x, y: oy + pos.y };
+        });
+      });
+
+      const stageW = xCursor - APP_GAP_X + PADDING;
+      const stageH = Math.max(...appColH) + PADDING;
+      stage.style.width  = stageW + 'px';
+      stage.style.height = stageH + 'px';
+      svg.setAttribute('width',  stageW);
+      svg.setAttribute('height', stageH);
+
+      drawAppGroups(appOffsets, appLayouts, appList);
+
+      // Model boxes
+      models.forEach(model => {
+        const { x, y } = currentPositions[model.key];
+        const box = document.createElement('div');
+        box.className  = 'model-box';
+        box.style.left = x + 'px';
+        box.style.top  = y + 'px';
+        const inheritRow = showInheritance && model.inherits && model.inherits.length > 0
+          ? `<div class="model-inherit">(${model.inherits.map(k => k.split('.').pop()).join(', ')})</div>`
+          : '';
+        box.innerHTML  =
+          `<div class="model-header">` +
+            `<span class="app-badge">${model.app}</span>${model.name}` +
+          `</div>` +
+          inheritRow +
+          `<div class="model-body">` +
+          model.fields.map(f =>
+            `<div class="model-field ${f.relation ? (KIND_CLASS[f.relation.kind] ?? '') : ''}">` +
+              `<span class="field-name" title="${f.verbose_name}">${f.name}</span>` +
+              `<span class="field-type">${f.type}</span>` +
+            `</div>`
+          ).join('') +
+          `</div>`;
+        box.querySelector('.model-header')
+           .addEventListener('click', () => handleHeaderClick(model.key));
+        box.querySelector('.model-body')
+           .addEventListener('dblclick', () => showModelDetail(model.key));
+        boxEls[model.key] = box;
+        stage.appendChild(box);
+      });
+
+      drawLines(models, currentPositions);
+
+      // Fit & centre after rebuild
+      const vpW = viewport.clientWidth;
+      const vpH = viewport.clientHeight;
+      scale = Math.min(vpW / stageW, vpH / stageH, 1);
+      tx    = (vpW - stageW * scale) / 2;
+      ty    = (vpH - stageH * scale) / 2;
+      applyTransform();
+    }
+
+    // ── Zoom / Pan ───────────────────────────────────────────────────────────
+    let scale = 1, tx = 0, ty = 0;
+    let panning = false, lastX = 0, lastY = 0;
+
+    function applyTransform() {
+      stage.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+    }
+
+    viewport.addEventListener('wheel', e => {
+      e.preventDefault();
+      const rect  = viewport.getBoundingClientRect();
+      const mx    = e.clientX - rect.left;
+      const my    = e.clientY - rect.top;
+      const delta = e.deltaY < 0 ? 1.1 : 0.9;
+      tx    = mx - delta * (mx - tx);
+      ty    = my - delta * (my - ty);
+      scale = Math.min(Math.max(scale * delta, 0.05), 20);
+      applyTransform();
+    }, { passive: false });
+
+    viewport.addEventListener('pointerdown', e => {
+      if (e.target.closest('.model-box')) return;
+      panning = true;
+      lastX   = e.clientX;
+      lastY   = e.clientY;
+      viewport.setPointerCapture(e.pointerId);
+      viewport.classList.add('panning');
+    });
+    viewport.addEventListener('pointermove', e => {
+      if (!panning) return;
+      tx += e.clientX - lastX;  ty += e.clientY - lastY;
+      lastX = e.clientX;        lastY = e.clientY;
+      applyTransform();
+    });
+    viewport.addEventListener('pointerup', () => {
+      panning = false;
+      viewport.classList.remove('panning');
+    });
+
+    // ── Keyboard pan ─────────────────────────────────────────────────────────
+    document.addEventListener('keydown', e => {
+      const tag = document.activeElement.tagName;
+      if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+      const STEP = 120;
+      if (e.key === 'ArrowRight') { e.preventDefault(); tx -= STEP; applyTransform(); }
+      else if (e.key === 'ArrowLeft')  { e.preventDefault(); tx += STEP; applyTransform(); }
+      else if (e.key === 'ArrowDown')  { e.preventDefault(); ty -= STEP; applyTransform(); }
+      else if (e.key === 'ArrowUp')    { e.preventDefault(); ty += STEP; applyTransform(); }
+    });
+
+    // ── Focus mode ───────────────────────────────────────────────────────────
+    function updateVisibility() {
+      if (focusedModel === null) {
+        Object.values(boxEls).forEach(el => { el.style.opacity = ''; });
+        svg.querySelectorAll('path').forEach(p => { p.style.opacity = ''; });
+        return;
+      }
+      const active = new Set([focusedModel, ...(adjacency[focusedModel] ?? [])]);
+      Object.entries(boxEls).forEach(([name, el]) => {
+        el.style.opacity = active.has(name) ? '1' : '0.1';
+      });
+      svg.querySelectorAll('path[data-from]').forEach(p => {
+        p.style.opacity = (active.has(p.dataset.from) && active.has(p.dataset.to))
+          ? '0.85' : '0.04';
+      });
+    }
+
+    // Animate the stage transform (for focus zoom transitions only).
+    function applyTransformAnimated() {
+      stage.style.transition = 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)';
+      applyTransform();
+      stage.addEventListener('transitionend', () => { stage.style.transition = ''; }, { once: true });
+    }
+
+    // Zoom viewport to fit a set of model keys (stage-space bounding box).
+    function zoomToFitKeys(keys) {
+      if (!keys || keys.size === 0) return;
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      keys.forEach(key => {
+        const pos   = currentPositions[key];
+        const model = currentModels.find(m => m.key === key);
+        if (!pos || !model) return;
+        minX = Math.min(minX, pos.x);
+        minY = Math.min(minY, pos.y);
+        maxX = Math.max(maxX, pos.x + MODEL_W);
+        maxY = Math.max(maxY, pos.y + modelH(model));
+      });
+      if (!isFinite(minX)) return;
+      const PAD      = 48;
+      const vpW      = viewport.clientWidth;
+      const vpH      = viewport.clientHeight;
+      const newScale = Math.min((vpW - PAD * 2) / (maxX - minX), (vpH - PAD * 2) / (maxY - minY), 2);
+      scale = newScale;
+      tx    = (vpW - (maxX - minX) * newScale) / 2 - minX * newScale;
+      ty    = (vpH - (maxY - minY) * newScale) / 2 - minY * newScale;
+      applyTransformAnimated();
+    }
+
+    // Zoom viewport to fit the full stage (used when clearing focus).
+    function zoomToFitAll() {
+      const stageW   = parseFloat(stage.style.width)  || stage.offsetWidth;
+      const stageH   = parseFloat(stage.style.height) || stage.offsetHeight;
+      const vpW      = viewport.clientWidth;
+      const vpH      = viewport.clientHeight;
+      scale = Math.min(vpW / stageW, vpH / stageH, 1);
+      tx    = (vpW - stageW * scale) / 2;
+      ty    = (vpH - stageH * scale) / 2;
+      applyTransformAnimated();
+    }
+
+    function applyFocus(name) {
+      focusedModel = name;
+      updateVisibility();
+      const active = new Set([name, ...(adjacency[name] ?? [])]);
+      // Restrict to models that are actually rendered in the current diagram.
+      zoomToFitKeys(new Set([...active].filter(k => currentPositions[k])));
+    }
+
+    function clearFocus() {
+      focusedModel = null;
+      updateVisibility();
+      zoomToFitAll();
+    }
+
+    function handleHeaderClick(name) {
+      if (name === focusedModel) {
+        clearFocus();
+      } else {
+        applyFocus(name);
+      }
+    }
+
+    // ── App filter ───────────────────────────────────────────────────────────
+    const selectedApps  = new Set(PREFS.selected_apps || []);
+    const excludedApps  = new Set(PREFS.excluded_apps || []);
+    let showOnlyManaged = PREFS.show_only_managed || false;
+    let showInheritance = PREFS.show_inheritance  || false;
+
+    function getFilteredModels() {
+      const excludedKeys = new Set();
+      if (excludedApps.size > 0)
+        MODELS.forEach(m => { if (excludedApps.has(m.app)) excludedKeys.add(m.key); });
+      let pool = excludedKeys.size ? MODELS.filter(m => !excludedKeys.has(m.key)) : MODELS;
+      if (showOnlyManaged) pool = pool.filter(m => m.managed !== false);
+      if (selectedApps.size === 0) return pool;
+      const active = new Set();
+      pool.forEach(m => {
+        if (!selectedApps.has(m.app)) return;
+        active.add(m.key);
+        (adjacency[m.key] ?? new Set()).forEach(n => { if (!excludedKeys.has(n)) active.add(n); });
+      });
+      return pool.filter(m => active.has(m.key));
+    }
+
+    // ── Auto-save preferences ─────────────────────────────────────────────────
+    let saveTimer = null;
+    function savePreferences() {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        fetch(document.querySelector('meta[name="save-prefs-url"]').content, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+          body: JSON.stringify({
+            selected_apps:    [...selectedApps],
+            excluded_apps:    [...excludedApps],
+            routing_style:    routingStyle,
+            show_only_managed: showOnlyManaged,
+          }),
+        });
+      }, 600);
+    }
+
+    const filterBar = document.getElementById('filter-bar');
+    [...new Set(MODELS.map(m => m.app))].sort().forEach(app => {
+      const chip = document.createElement('span');
+      chip.className = 'app-chip';
+      chip.textContent = app;
+      if (selectedApps.has(app))      chip.classList.add('selected');
+      else if (excludedApps.has(app)) chip.classList.add('excluded');
+
+      // Left-click: toggle selected (clears excluded)
+      chip.addEventListener('click', () => {
+        excludedApps.delete(app);
+        chip.classList.remove('excluded');
+        if (selectedApps.has(app)) {
+          selectedApps.delete(app);
+          chip.classList.remove('selected');
+        } else {
+          selectedApps.add(app);
+          chip.classList.add('selected');
+        }
+        renderDiagram(getFilteredModels());
+        savePreferences();
+      });
+
+      // Right-click: toggle excluded (clears selected)
+      chip.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        selectedApps.delete(app);
+        chip.classList.remove('selected');
+        if (excludedApps.has(app)) {
+          excludedApps.delete(app);
+          chip.classList.remove('excluded');
+        } else {
+          excludedApps.add(app);
+          chip.classList.add('excluded');
+        }
+        renderDiagram(getFilteredModels());
+        savePreferences();
+      });
+
+      filterBar.appendChild(chip);
+    });
+
+    // ── Line routing select ───────────────────────────────────────────────────
+    document.getElementById('routing-select').value = routingStyle;
+    document.getElementById('routing-select').addEventListener('change', e => {
+      routingStyle = e.target.value;
+      drawLines(currentModels, currentPositions);
+      updateVisibility();
+      savePreferences();
+    });
+
+    // ── Model detail modal ───────────────────────────────────────────────────
+    const detailOverlay = document.getElementById('detail-overlay');
+    const detailTitle   = document.getElementById('detail-title');
+    const detailAppBadge = document.getElementById('detail-app-badge');
+    const detailBody    = document.getElementById('detail-body');
+
+    function showModelDetail(key) {
+      const model = MODELS.find(m => m.key === key);
+      if (!model) return;
+
+      detailTitle.textContent    = model.name;
+      detailAppBadge.textContent = model.app;
+
+      // ── Fields table ──────────────────────────────────────────────────────
+      let html = `<p class="detail-section-title">Fields</p>`;
+      html += `<table class="detail-table">
+        <thead><tr>
+          <th>Field</th><th>Type</th><th>Size</th><th>Default</th><th>Verbose name</th><th>Help text</th><th>Choices</th>
+        </tr></thead><tbody>`;
+      model.fields.forEach(f => {
+        const rel = f.relation ? ` → ${f.relation.to}` : '';
+        const choicesHtml = f.choices
+          ? f.choices.map(c =>
+              `<div class="choice-item"><span class="choice-value">${c.value}</span><span class="choice-label">${c.label}</span></div>`
+            ).join('')
+          : '';
+        html +=
+          `<tr>` +
+            `<td class="dt-name">${f.name}</td>` +
+            `<td class="dt-type">${f.type}${rel}</td>` +
+            `<td class="dt-size">${f.size || ''}</td>` +
+            `<td class="dt-default">${f.default ?? ''}</td>` +
+            `<td>${f.verbose_name || ''}</td>` +
+            `<td class="dt-help">${f.help_text || ''}</td>` +
+            `<td>${choicesHtml}</td>` +
+          `</tr>`;
+      });
+      html += `</tbody></table>`;
+
+      // ── Indexes ───────────────────────────────────────────────────────────
+      const indexes = model.indexes || [];
+      html += `<p class="detail-section-title">Indexes</p>`;
+      if (indexes.length === 0) {
+        html += `<p class="detail-empty">No indexes.</p>`;
+      } else {
+        const BADGE = { pk: 'idx-pk', unique: 'idx-unique', index: 'idx-index' };
+        const LABEL = { pk: 'PK', unique: 'UNIQUE', index: 'INDEX' };
+        html += `<table class="detail-table">
+          <thead><tr><th>Type</th><th>Fields</th><th>Name</th></tr></thead><tbody>`;
+        indexes.forEach(idx => {
+          const badge = BADGE[idx.type] ?? 'idx-index';
+          const label = LABEL[idx.type] ?? idx.type.toUpperCase();
+          html +=
+            `<tr>` +
+              `<td><span class="idx-badge ${badge}">${label}</span></td>` +
+              `<td class="idx-fields">${idx.fields.join(', ')}</td>` +
+              `<td class="idx-name">${idx.name || ''}</td>` +
+            `</tr>`;
+        });
+        html += `</tbody></table>`;
+      }
+
+      detailBody.innerHTML = html;
+      detailOverlay.hidden = false;
+    }
+
+    function closeDetail() { detailOverlay.hidden = true; }
+
+    document.getElementById('detail-close').addEventListener('click', closeDetail);
+    detailOverlay.addEventListener('click', e => { if (e.target === detailOverlay) closeDetail(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !detailOverlay.hidden) closeDetail(); });
+
+    // ── Initial render ───────────────────────────────────────────────────────
+    renderDiagram(getFilteredModels());
+  </script>
+</body>
+</html>

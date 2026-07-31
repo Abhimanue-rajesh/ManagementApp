@@ -1,0 +1,196 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Model Visualizer — Settings</title>
+  <link rel="stylesheet" href="{% static 'django_lumen/css/django_lumen.css' %}">
+</head>
+<body class="page-help">
+
+<header>
+  Model Visualizer
+  <a href="{% url 'django-lumen-diagram' %}">&larr; Back to diagram</a>
+
+  <a href="{% url 'admin:index' %}" class="lumen-back-btn">
+    ← Back to Admin
+  </a>
+</header>
+
+<div class="container">
+  <h1>Settings</h1>
+  <p class="subtitle">Configure diagram display and visibility preferences.</p>
+
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="exclude_models" id="exclude-models-json" value="{{ exclude_models }}">
+
+    <div class="section">
+      <div class="section-body section-body-actions">
+        <a href="{% url 'django-lumen-diagram' %}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary" disabled>Save</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <div class="section-icon icon-sky">🖥️</div>
+        <span class="section-title">Display options</span>
+      </div>
+      <div class="section-body">
+        <label class="settings-toggle">
+          <input type="checkbox" name="show_only_managed" id="show-only-managed"
+            {% if show_only_managed %}checked{% endif %}>
+          Managed tables only — hide models with <code>managed = False</code>
+        </label>
+      </div>
+      <div class="section-body">
+        <label class="settings-toggle">
+          <input type="checkbox" name="show_inheritance" id="show-inheritance"
+            {% if show_inheritance %}checked{% endif %}>
+          Show inheritance — display the parent class below the model name
+        </label>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <div class="section-icon icon-sky">⚙️</div>
+        <span class="section-title">Excluded models</span>
+      </div>
+      <div class="section-body">
+        <p class="pattern-hint">
+          Regex patterns matched against model names. Matching models are hidden from the diagram.
+          Examples: <code>^Historical</code>, <code>Log$</code>, <code>Audit</code>.
+        </p>
+        <div class="pattern-list" id="pattern-list"></div>
+        <div class="pattern-add-row">
+          <input type="text" id="pattern-input" class="pattern-input" placeholder="e.g. ^Historical">
+          <button type="button" class="btn btn-secondary" id="pattern-add-btn">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <div class="section-icon icon-rose">🚫</div>
+        <span class="section-title">Excluded apps</span>
+      </div>
+      <div class="section-body">
+        <p class="pattern-hint">Checked apps are completely hidden from the diagram.</p>
+        <div class="app-list" style="margin-bottom: 0;">
+          {% for app in all_apps %}
+            <div class="app-row {% if app in excluded_apps %}checked{% endif %}">
+              <input
+                type="checkbox"
+                name="excluded_apps"
+                value="{{ app }}"
+                id="app-{{ forloop.counter }}"
+                {% if app in excluded_apps %}checked{% endif %}
+              >
+              <label for="app-{{ forloop.counter }}">{{ app }}</label>
+            </div>
+          {% empty %}
+            <p class="empty">No apps found.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-body section-body-actions">
+        <a href="{% url 'django-lumen-diagram' %}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary" disabled>Save</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+  let patterns = JSON.parse(document.getElementById('exclude-models-json').value || '[]');
+  const listEl    = document.getElementById('pattern-list');
+  const jsonInput = document.getElementById('exclude-models-json');
+
+  function escapeHtml(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function renderPatterns() {
+    listEl.innerHTML = '';
+    if (patterns.length === 0) {
+      listEl.innerHTML = '<p class="pattern-empty">No patterns — all models are visible.</p>';
+    } else {
+      patterns.forEach((p, i) => {
+        const row = document.createElement('div');
+        row.className = 'pattern-row';
+        row.innerHTML =
+          `<span class="pattern-text">${escapeHtml(p)}</span>` +
+          `<button type="button" class="pattern-delete" data-idx="${i}" title="Remove">&times;</button>`;
+        listEl.appendChild(row);
+      });
+    }
+    jsonInput.value = JSON.stringify(patterns);
+    updateSaveButtons();
+  }
+
+  listEl.addEventListener('click', e => {
+    const btn = e.target.closest('.pattern-delete');
+    if (!btn) return;
+    patterns.splice(Number(btn.dataset.idx), 1);
+    renderPatterns();
+  });
+
+  function addPattern() {
+    const input = document.getElementById('pattern-input');
+    const val   = input.value.trim();
+    if (!val || patterns.includes(val)) { input.focus(); return; }
+    patterns.push(val);
+    input.value = '';
+    renderPatterns();
+    input.focus();
+  }
+
+  document.getElementById('pattern-add-btn').addEventListener('click', addPattern);
+  document.getElementById('pattern-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); addPattern(); }
+  });
+
+  // capture initial state before first render (checkboxes already in DOM from server)
+  const initManaged      = document.getElementById('show-only-managed').checked;
+  const initInheritance  = document.getElementById('show-inheritance').checked;
+  const initPatternsJson = JSON.stringify(patterns);
+  const initExcludedApps = new Set(
+    [...document.querySelectorAll('input[name="excluded_apps"]:checked')].map(cb => cb.value)
+  );
+
+  renderPatterns();
+
+  function hasChanges() {
+    if (document.getElementById('show-only-managed').checked !== initManaged) return true;
+    if (document.getElementById('show-inheritance').checked !== initInheritance) return true;
+    if (JSON.stringify(patterns) !== initPatternsJson) return true;
+    const curr = new Set([...document.querySelectorAll('input[name="excluded_apps"]:checked')].map(cb => cb.value));
+    if (curr.size !== initExcludedApps.size) return true;
+    for (const a of curr) if (!initExcludedApps.has(a)) return true;
+    return false;
+  }
+
+  function updateSaveButtons() {
+    const enabled = hasChanges();
+    document.querySelectorAll('button[type="submit"]').forEach(btn => btn.disabled = !enabled);
+  }
+
+  document.getElementById('show-only-managed').addEventListener('change', updateSaveButtons);
+  document.getElementById('show-inheritance').addEventListener('change', updateSaveButtons);
+
+  document.querySelectorAll('.app-row input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      cb.closest('.app-row').classList.toggle('checked', cb.checked);
+      updateSaveButtons();
+    });
+  });
+</script>
+
+</body>
+</html>
