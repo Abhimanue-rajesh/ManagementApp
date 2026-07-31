@@ -30,6 +30,12 @@ UNFOLD = {
                         "permission": can_view_main_dashboard,
                     },
                     {
+                        "title": "Tasks Dashboard",
+                        "icon": "folder_open",
+                        "link": reverse_lazy("admin:tasks_dashboard"),
+                        "permission": can_view_task_dashboard,
+                    },
+                    {
                         "title": "Credentials",
                         "icon": "key",
                         "link": reverse_lazy("admin:credentials_credential_changelist"),
@@ -52,12 +58,6 @@ UNFOLD = {
                 "collapsible": True,
                 "separator": True,
                 "items": [
-                    {
-                        "title": "Tasks Dashboard",
-                        "icon": "folder_open",
-                        "link": reverse_lazy("admin:tasks_dashboard"),
-                        "permission": can_view_task_dashboard,
-                    },
                     {
                         "title": "All Daily Tasks",
                         "icon": "today",
