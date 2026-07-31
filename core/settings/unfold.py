@@ -5,6 +5,7 @@ from core.settings.permissions import (
     assigner_view_all_daily_tasks,
     can_view_main_dashboard,
     can_view_task_dashboard,
+    is_superuser,
     view_only_workers_task,
 )
 
@@ -268,29 +269,31 @@ UNFOLD = {
                 "title": ("Developer Tools"),
                 "collapsible": True,
                 "separator": True,
+                "permission": is_superuser,
                 "items": [
                     {
                         "title": ("Model Visualizer"),
                         "icon": "hub",
                         "link": lambda request: reverse("django-lumen-diagram"),
+                        "permission": is_superuser,
                     },
                     {
                         "title": ("Model Activity"),
                         "icon": "history",
                         "link": reverse_lazy("admin:easyaudit_crudevent_changelist"),
-                        "permission": lambda request: (request.user.is_superuser),
+                        "permission": is_superuser,
                     },
                     {
                         "title": ("Login Activity"),
                         "icon": "login",
                         "link": reverse_lazy("admin:easyaudit_loginevent_changelist"),
-                        "permission": lambda request: (request.user.is_superuser),
+                        "permission": is_superuser,
                     },
                     {
                         "title": ("Request Activity"),
                         "icon": "language",
                         "link": reverse_lazy("admin:easyaudit_requestevent_changelist"),
-                        "permission": lambda request: (request.user.is_superuser),
+                        "permission": is_superuser,
                     },
                 ],
             },
