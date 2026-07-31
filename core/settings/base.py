@@ -3,6 +3,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from core.settings import easy_audit  # noqa: F401
 from core.settings.unfold import UNFOLD  # noqa: F401
 
 load_dotenv()
@@ -29,6 +30,7 @@ INSTALLED_APPS = [
 
 # Add External Apps Here
 EXTERNAL_APPS = [
+    "easyaudit",
     "django_lumen",
     "tasks.apps.TasksConfig",
     "tickets.apps.TicketsConfig",
@@ -48,6 +50,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "easyaudit.middleware.easyaudit.EasyAuditMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
