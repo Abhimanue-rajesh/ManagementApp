@@ -17,14 +17,25 @@ function initializeWorldClock() {
     function updateClock() {
         const now = new Date();
 
-        // Show today's date only once (using the browser's local date)
-        const dateElement = document.getElementById("current-date");
+        const desktopDateElement = document.getElementById("current-date");
+        const mobileDateElement = document.getElementById(
+            "current-date-mobile"
+        );
 
-        if (dateElement) {
-            dateElement.textContent = now.toLocaleDateString("en-GB", {
+        // Desktop: 03 Aug 2026
+        if (desktopDateElement) {
+            desktopDateElement.textContent = now.toLocaleDateString("en-GB", {
                 day: "2-digit",
                 month: "short",
                 year: "numeric",
+            });
+        }
+
+        // Mobile: 03 Aug
+        if (mobileDateElement) {
+            mobileDateElement.textContent = now.toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "short",
             });
         }
 
@@ -43,7 +54,9 @@ function initializeWorldClock() {
     }
 
     updateClock();
-    setInterval(updateClock, 1000);
+
+    // Seconds are not displayed, so updating every 30 seconds is enough.
+    setInterval(updateClock, 30000);
 }
 
 document.addEventListener("DOMContentLoaded", initializeWorldClock);
