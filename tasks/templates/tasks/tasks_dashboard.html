@@ -13,11 +13,23 @@
 {% endblock branding %}
 {% block content %}
     <div class="flex flex-col gap-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-semibold text-font-important-light dark:text-font-important-dark">Task Activity</h1>
+            </div>
+            {% if perms.tasks.add_dailytask %}
+                <div class="flex items-center gap-3">
+                    <a href="{% url 'admin:tasks_project_add' %}"
+                       class="inline-flex items-center rounded-default bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-700">
+                        Add New Project
+                    </a>
+                </div>
+            {% endif %}
+        </div>
         <div class="grid grid-cols-1 gap-6 xl:grid-cols-3">
             <!-- Task Activity Chart -->
             <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-base-700 dark:bg-base-900 xl:col-span-2">
                 <div class="mb-4">
-                    <h2 class="text-base font-semibold text-font-important-light dark:text-font-important-dark">Task Activity</h2>
                     <p class="text-sm text-font-subtle-light dark:text-font-subtle-dark">Task status overview for the last 5 months</p>
                 </div>
                 <div id="task-status-chart"></div>
@@ -32,46 +44,40 @@
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-1">
                 <a href="{{ task_list_url }}"
                    class="flex items-center justify-between rounded-default border border-base-200 bg-white p-4 transition hover:border-primary-500 dark:border-base-800 dark:bg-base-900">
-                    <p class="text-sm font-medium text-font-subtle-light dark:text-font-subtle-dark">Total Tasks</p>
+                    <p class="text-sm font-medium">Total Tasks</p>
                     <span class="text-2xl font-semibold text-font-important-light dark:text-font-important-dark">
                         {{ task_summary.total }}
                     </span>
                 </a>
                 <a href="{{ task_list_url }}?status__exact=not_started"
                    class="flex items-center justify-between rounded-default border border-base-200 bg-white p-4 transition hover:border-primary-500 dark:border-base-800 dark:bg-base-900">
-                    <p class="text-sm font-medium text-font-subtle-light dark:text-font-subtle-dark">Not Started</p>
+                    <p class="text-sm font-medium ">Not Started</p>
                     <span class="text-2xl font-semibold text-font-important-light dark:text-font-important-dark">
                         {{ task_summary.not_started }}
                     </span>
                 </a>
                 <a href="{{ task_list_url }}?status__exact=in_progress"
                    class="flex items-center justify-between rounded-default border border-base-200 bg-white p-4 transition hover:border-primary-500 dark:border-base-800 dark:bg-base-900">
-                    <p class="text-sm font-medium text-font-subtle-light dark:text-font-subtle-dark">In Progress</p>
+                    <p class="text-sm font-medium">In Progress</p>
                     <span class="text-2xl font-semibold text-font-important-light dark:text-font-important-dark">
                         {{ task_summary.in_progress }}
                     </span>
                 </a>
                 <a href="{{ task_list_url }}?status__exact=waiting_for_approval"
                    class="flex items-center justify-between rounded-default border border-base-200 bg-white p-4 transition hover:border-primary-500 dark:border-base-800 dark:bg-base-900">
-                    <p class="text-sm font-medium text-font-subtle-light dark:text-font-subtle-dark">Waiting for Approval</p>
+                    <p class="text-sm font-medium">Waiting for Approval</p>
                     <span class="text-2xl font-semibold text-font-important-light dark:text-font-important-dark">
                         {{ task_summary.waiting_for_approval }}
                     </span>
                 </a>
                 <a href="{{ task_list_url }}?status__exact=closed"
                    class="flex items-center justify-between rounded-default border border-base-200 bg-white p-4 transition hover:border-primary-500 dark:border-base-800 dark:bg-base-900">
-                    <p class="text-sm font-medium text-font-subtle-light dark:text-font-subtle-dark">Completed</p>
+                    <p class="text-sm font-medium">Completed</p>
                     <span class="text-2xl font-semibold text-font-important-light dark:text-font-important-dark">
                         {{ task_summary.closed }}
                     </span>
                 </a>
-                <a href="{{ task_list_url }}?status__exact=terminated"
-                   class="flex items-center justify-between rounded-default border border-base-200 bg-white p-4 transition hover:border-primary-500 dark:border-base-800 dark:bg-base-900">
-                    <p class="text-sm font-medium text-font-subtle-light dark:text-font-subtle-dark">Terminated</p>
-                    <span class="text-2xl font-semibold text-font-important-light dark:text-font-important-dark">
-                        {{ task_summary.terminated }}
-                    </span>
-                </a>
+
             </div>
         </div>
         <!-- Projects table -->
@@ -80,27 +86,13 @@
                 <table class="w-full">
                     <thead>
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-font-subtle-light dark:text-font-subtle-dark">
-                                Project
-                            </th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-font-subtle-light dark:text-font-subtle-dark">
-                                Total
-                            </th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-font-subtle-light dark:text-font-subtle-dark">
-                                Not Started
-                            </th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-font-subtle-light dark:text-font-subtle-dark">
-                                In Progress
-                            </th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-font-subtle-light dark:text-font-subtle-dark">
-                                Approval
-                            </th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-font-subtle-light dark:text-font-subtle-dark">
-                                Completed
-                            </th>
-                            <th class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-font-subtle-light dark:text-font-subtle-dark">
-                                Actions
-                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide">Project</th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide">Total</th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide">Not Started</th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide">In Progress</th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide">Approval</th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide">Completed</th>
+                            <th class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-base-200 dark:divide-base-800">

@@ -37,6 +37,14 @@ UNFOLD = {
                         "permission": can_view_task_dashboard,
                     },
                     {
+                        "title": "Projects",
+                        "icon": "engineering",
+                        "link": reverse_lazy("admin:tasks_project_changelist"),
+                        "permission": lambda request: request.user.has_perm(
+                            "tasks.view_project"
+                        ),
+                    },
+                    {
                         "title": "Credentials",
                         "icon": "key",
                         "link": reverse_lazy("admin:credentials_credential_changelist"),
@@ -68,7 +76,9 @@ UNFOLD = {
                     {
                         "title": "My Daily Tasks",
                         "icon": "today",
-                        "link": reverse_lazy("admin:tasks_dailytask_changelist"),
+                        "link": lambda request: (
+                            f"{reverse_lazy('admin:tasks_dailytask_changelist')}?my_tasks=1"
+                        ),
                         "permission": view_only_workers_task,
                     },
                     {
