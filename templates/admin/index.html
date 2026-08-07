@@ -7,17 +7,18 @@
 {% block extrahead %}
     {{ block.super }}
     <script src="{% static 'js/apexcharts.min.js' %}"></script>
-    <script src="{% static 'dashboard/js/dashboard.js' %}"></script>
+    <script src="{% static 'dashboard/js/ticket_chart.js' %}"></script>
+    <script src="{% static 'dashboard/js/task_chart.js' %}"></script>
 {% endblock extrahead %}
 {% block content %}
     <div class="flex flex-col gap-6">
         <h1 class="text-2xl font-semibold text-font-important-light dark:text-font-important-dark">{% trans "Dashboard" %}</h1>
-        <div class="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
             {% if perms.tickets.view_supportticket %}
                 <!-- Ticket Chart -->
-                <div class="xl:col-span-2 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-base-700 dark:bg-base-900">
+                <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-base-700 dark:bg-base-900">
                     <div class="mb-4">
-                        <h2 class="text-base font-semibold text-font-important-light dark:text-font-important-dark">Ticket Activity</h2>
+                        <h2 class="text-base font-semibold text-font-important-light dark:text-font-important-dark">EBS Ticket Activity</h2>
                         <p class="text-sm text-font-subtle-light dark:text-font-subtle-dark">Created tickets for the last 5 months</p>
                     </div>
                     <div id="ticket-column-chart"></div>
@@ -25,47 +26,80 @@
                     <script id="ticket-created-counts" type="application/json">{{ ticket_created_counts|safe }}</script>
                 </div>
             {% endif %}
-            {% if perms.tasks.view_task %}
-                <!-- Task Summary -->
-                <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-base-700 dark:bg-base-900">
-                    <h2 class="mb-3 text-sm font-medium text-font-subtle-light dark:text-font-subtle-dark">{% trans "Total Tasks" %}</h2>
-                    <p class="mb-5 text-3xl font-semibold tracking-tight text-font-important-light dark:text-font-important-dark">
-                        {{ total_tasks }}
-                    </p>
-                    <div class="border-t border-gray-200 pt-4 dark:border-base-700">
-                        <h3 class="mb-4 text-sm font-medium text-font-subtle-light dark:text-font-subtle-dark">Tasks by Category</h3>
-                        <div class="flex flex-col gap-3">
-                            {% for category in task_category_counts %}
-                                <div class="flex items-center justify-between gap-3">
-                                    <span class="truncate text-sm text-font-default-light dark:text-font-default-dark">{{ category.name }}</span>
-                                    <span class="shrink-0 rounded-full bg-primary-50 px-3 py-1 text-sm font-semibold text-primary-600 dark:bg-primary-900/20">
-                                        {{ category.task_count }}
-                                    </span>
-                                </div>
-                            {% empty %}
-                                <p class="text-sm text-font-subtle-light dark:text-font-subtle-dark">No task categories found.</p>
-                            {% endfor %}
-                        </div>
+            <!-- Task Activity Chart -->
+            <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-base-700 dark:bg-base-900">
+                <div class="mb-4">
+                    <h2 class="text-base font-semibold text-font-important-light dark:text-font-important-dark">Task Activity</h2>
+                    <p class="text-sm text-font-subtle-light dark:text-font-subtle-dark">Task status overview for the last 5 months</p>
+                </div>
+                <div id="task-status-chart"></div>
+                <script id="task-chart-labels" type="application/json">{{ task_chart_labels|safe }}</script>
+                <script id="task-not-started-counts" type="application/json">{{ task_not_started_counts|safe }}</script>
+                <script id="task-in-progress-counts" type="application/json">{{ task_in_progress_counts|safe }}</script>
+                <script id="task-waiting-counts" type="application/json">{{ task_waiting_counts|safe }}</script>
+                <script id="task-closed-counts" type="application/json">{{ task_closed_counts|safe }}</script>
+                <script id="task-terminated-counts" type="application/json">{{ task_terminated_counts|safe }}</script>
+            </div>
+        </div>
+        {% comment %} {% if perms.tasks.view_task %}
+            <!-- Task Summary -->
+            <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-base-700 dark:bg-base-900">
+                <h2 class="mb-3 text-sm font-medium text-font-subtle-light dark:text-font-subtle-dark">{% trans "Total Tasks" %}</h2>
+                <p class="mb-5 text-3xl font-semibold tracking-tight text-font-important-light dark:text-font-important-dark">
+                    {{ total_tasks }}
+                </p>
+                <div class="border-t border-gray-200 pt-4 dark:border-base-700">
+                    <h3 class="mb-4 text-sm font-medium text-font-subtle-light dark:text-font-subtle-dark">Tasks by Category</h3>
+                    <div class="flex flex-col gap-3">
+                        {% for category in task_category_counts %}
+                            <div class="flex items-center justify-between gap-3">
+                                <span class="truncate text-sm text-font-default-light dark:text-font-default-dark">{{ category.name }}</span>
+                                <span class="shrink-0 rounded-full bg-primary-50 px-3 py-1 text-sm font-semibold text-primary-600 dark:bg-primary-900/20">
+                                    {{ category.task_count }}
+                                </span>
+                            </div>
+                        {% empty %}
+                            <p class="text-sm text-font-subtle-light dark:text-font-subtle-dark">No task categories found.</p>
+                        {% endfor %}
                     </div>
                 </div>
-            {% endif %}
-        </div>
-        {% if perms.tickets.view_supportticket %}
-            <div class="mt-2 pt-2 dark:border-base-700">
-                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
-                    {% for status in ticket_status_counts %}
-                        <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-base-700 dark:bg-base-800">
-                            <div class="truncate text-sm text-font-subtle-light dark:text-font-subtle-dark">{{ status.name }}</div>
-                            <div class="mt-1 text-2xl font-semibold text-font-important-light dark:text-font-important-dark">
-                                {{ status.ticket_count }}
-                            </div>
-                        </div>
-                    {% empty %}
-                        <p class="text-sm text-font-subtle-light dark:text-font-subtle-dark">No ticket statuses found.</p>
-                    {% endfor %}
-                </div>
             </div>
-        {% endif %}
+        {% endif %} {% endcomment %}
+        {% comment %} <div class="grid grid-cols-1 gap-6 xl:grid-cols-3">
+            <!-- Task Status Summary -->
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-1">
+                <a href="{{ task_list_url }}" class="flex items-center justify-between rounded-default border border-base-200 bg-white p-4 transition hover:border-primary-500 dark:border-base-800 dark:bg-base-900">
+                    <p class="text-sm font-medium">Total Tasks</p>
+                    <span class="text-2xl font-semibold text-font-important-light dark:text-font-important-dark">
+                        {{ task_summary.total }}
+                    </span>
+                </a>
+                <a href="{{ task_list_url }}?status__exact=not_started" class="flex items-center justify-between rounded-default border border-base-200 bg-white p-4 transition hover:border-primary-500 dark:border-base-800 dark:bg-base-900">
+                    <p class="text-sm font-medium ">Not Started</p>
+                    <span class="text-2xl font-semibold text-font-important-light dark:text-font-important-dark">
+                        {{ task_summary.not_started }}
+                    </span>
+                </a>
+                <a href="{{ task_list_url }}?status__exact=in_progress" class="flex items-center justify-between rounded-default border border-base-200 bg-white p-4 transition hover:border-primary-500 dark:border-base-800 dark:bg-base-900">
+                    <p class="text-sm font-medium">In Progress</p>
+                    <span class="text-2xl font-semibold text-font-important-light dark:text-font-important-dark">
+                        {{ task_summary.in_progress }}
+                    </span>
+                </a>
+                <a href="{{ task_list_url }}?status__exact=waiting_for_approval" class="flex items-center justify-between rounded-default border border-base-200 bg-white p-4 transition hover:border-primary-500 dark:border-base-800 dark:bg-base-900">
+                    <p class="text-sm font-medium">Waiting for Approval</p>
+                    <span class="text-2xl font-semibold text-font-important-light dark:text-font-important-dark">
+                        {{ task_summary.waiting_for_approval }}
+                    </span>
+                </a>
+                <a href="{{ task_list_url }}?status__exact=closed" class="flex items-center justify-between rounded-default border border-base-200 bg-white p-4 transition hover:border-primary-500 dark:border-base-800 dark:bg-base-900">
+                    <p class="text-sm font-medium">Completed</p>
+                    <span class="text-2xl font-semibold text-font-important-light dark:text-font-important-dark">
+                        {{ task_summary.closed }}
+                    </span>
+                </a>
+            </div>
+        </div> {% endcomment %}
         {% if perms.web_management.view_domainmanager %}
             <!-- Web Management Reminders -->
             <div>

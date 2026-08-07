@@ -14,11 +14,11 @@ def can_view_main_dashboard(request):
     ).exists()
 
 
-def can_view_task_dashboard(request):
-    return (
-        is_superuser(request)
-        or request.user.groups.filter(name="Daily Task Assigners").exists()
-    )
+# def can_view_task_dashboard(request):
+#     return (
+#         is_superuser(request)
+#         or request.user.groups.filter(name="Daily Task Assigners").exists()
+#     )
 
 
 def view_only_workers_task(request):

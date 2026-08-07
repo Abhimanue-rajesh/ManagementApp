@@ -1,5 +1,6 @@
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
+from django.db.models import Count
 from django.shortcuts import redirect
 from django.utils import timezone
 from unfold.admin import ModelAdmin
@@ -170,10 +171,14 @@ class SupportTicketAdmin(ModelAdmin):
                 messages.error(request, first_error)
 
             return redirect(request.path)
+        ticket_status_counts = TicketStatus.objects.annotate(
+            ticket_count=Count("tickets")
+        ).order_by("name")
 
         extra_context = extra_context or {}
         extra_context["ticket_routings"] = TicketRouting.objects.all()
         extra_context["ticket_statuses"] = TicketStatus.objects.all()
+        extra_context["ticket_status_counts"] = ticket_status_counts
         extra_context["quick_copy_items"] = QuickCopy.objects.filter(
             related_to_tickets=True
         ).order_by("title")

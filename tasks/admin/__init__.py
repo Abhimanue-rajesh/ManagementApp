@@ -9,7 +9,6 @@ from tasks.admin.projects import (
     TaskActivityAdmin,
     TaskAdmin,
     TaskCategoryAdmin,
-    TasksDashboard,
 )
 
 __all__ = [
@@ -23,8 +22,6 @@ __all__ = [
     "TaskActivityAdmin",
     "TaskAdmin",
     "TaskCategoryAdmin",
-    "TaskCategoryAdmin",
-    "TasksDashboard",
     "Brand",
     "DailyTask",
 ]

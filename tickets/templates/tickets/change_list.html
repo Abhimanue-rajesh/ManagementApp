@@ -1,10 +1,24 @@
 {% extends "admin/change_list.html" %}
 {% load i18n %}
 {% block content %}
+    <div class="mt-1 mb-3 dark:border-base-700">
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
+            {% for status in ticket_status_counts %}
+                <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-base-700 dark:bg-base-800">
+                    <div class="truncate text-sm text-font-subtle-light dark:text-font-subtle-dark">{{ status.name }}</div>
+                    <div class="mt-1 text-2xl font-semibold text-font-important-light dark:text-font-important-dark">
+                        {{ status.ticket_count }}
+                    </div>
+                </div>
+            {% empty %}
+                <p class="text-sm text-font-subtle-light dark:text-font-subtle-dark">No ticket statuses found.</p>
+            {% endfor %}
+        </div>
+    </div>
     {% if quick_copy_items %}
         <div class="mb-6">
             <div class="rounded-2xl  bg-white shadow-sm dark:border-gray-800 dark:bg-base-900">
-                <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-2">
                     {% for item in quick_copy_items %}
                         <div class="group flex items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 transition-all hover:border-primary-500 hover:shadow-md dark:border-gray-700 dark:bg-base-800">
                             <div class="min-w-0 flex-1">
@@ -121,6 +135,5 @@
             </div>
         </form>
     </div>
-
     {{ block.super }}
 {% endblock content %}

@@ -1,10 +1,9 @@
 from django.templatetags.static import static
 from django.urls import reverse, reverse_lazy
 
-from core.settings.permissions import (
+from core.settings.permissions import (  # can_view_task_dashboard,
     assigner_view_all_daily_tasks,
     can_view_main_dashboard,
-    can_view_task_dashboard,
     is_superuser,
     view_only_workers_task,
 )
@@ -30,12 +29,12 @@ UNFOLD = {
                         "link": reverse_lazy("admin:index"),
                         "permission": can_view_main_dashboard,
                     },
-                    {
-                        "title": "Tasks Dashboard",
-                        "icon": "folder_open",
-                        "link": reverse_lazy("admin:tasks_dashboard"),
-                        "permission": can_view_task_dashboard,
-                    },
+                    # {
+                    #     "title": "Tasks Dashboard",
+                    #     "icon": "folder_open",
+                    #     "link": reverse_lazy("admin:tasks_dashboard"),
+                    #     "permission": can_view_task_dashboard,
+                    # },
                     {
                         "title": "Credentials",
                         "icon": "key",

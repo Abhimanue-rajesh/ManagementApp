@@ -1,13 +1,14 @@
 import json
 
 from dateutil.relativedelta import relativedelta
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.db.models.functions import TruncMonth
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.timezone import localdate
 
-from tasks.models import DailyTask, Task, TaskCategory
-from tickets.models import SupportTicket, TicketStatus
+from tasks.models import DailyTask, Project, Task, TaskCategory
+from tickets.models import SupportTicket
 from web_management.models import DomainManager, WebFormManager
 
 
@@ -62,10 +63,6 @@ def dashboard_callback(request, context):
         if form.needs_testing()
     ]
 
-    ticket_status_counts = TicketStatus.objects.annotate(
-        ticket_count=Count("tickets")
-    ).order_by("name")
-
     daily_tasks_queryset = DailyTask.objects.select_related(
         "user",
         "brand",
@@ -86,6 +83,108 @@ def dashboard_callback(request, context):
         "completed": today_daily_tasks.filter(status="completed").count(),
         "on_hold": today_daily_tasks.filter(status="on_hold").count(),
     }
+
+    today = localdate()
+    start_month = today.replace(day=1) - relativedelta(months=4)
+
+    monthly_data = (
+        Task.objects.filter(created_at__gte=start_month)
+        .annotate(month=TruncMonth("created_at"))
+        .values("month")
+        .annotate(
+            not_started=Count(
+                "id",
+                filter=Q(status="not_started"),
+            ),
+            in_progress=Count(
+                "id",
+                filter=Q(status="in_progress"),
+            ),
+            waiting_for_approval=Count(
+                "id",
+                filter=Q(status="waiting_for_approval"),
+            ),
+            closed=Count(
+                "id",
+                filter=Q(status="closed"),
+            ),
+            terminated=Count(
+                "id",
+                filter=Q(status="terminated"),
+            ),
+        )
+        .order_by("month")
+    )
+
+    monthly_lookup = {item["month"].strftime("%Y-%m"): item for item in monthly_data}
+
+    labels = []
+    not_started_counts = []
+    in_progress_counts = []
+    waiting_counts = []
+    closed_counts = []
+    terminated_counts = []
+
+    for index in range(5):
+        month = start_month + relativedelta(months=index)
+        month_key = month.strftime("%Y-%m")
+        month_data = monthly_lookup.get(month_key, {})
+
+        labels.append(month.strftime("%b %Y"))
+        not_started_counts.append(month_data.get("not_started", 0))
+        in_progress_counts.append(month_data.get("in_progress", 0))
+        waiting_counts.append(month_data.get("waiting_for_approval", 0))
+        closed_counts.append(month_data.get("closed", 0))
+        terminated_counts.append(month_data.get("terminated", 0))
+
+    task_summary = Task.objects.aggregate(
+        total=Count("id"),
+        not_started=Count(
+            "id",
+            filter=Q(status="not_started"),
+        ),
+        in_progress=Count(
+            "id",
+            filter=Q(status="in_progress"),
+        ),
+        waiting_for_approval=Count(
+            "id",
+            filter=Q(status="waiting_for_approval"),
+        ),
+        closed=Count(
+            "id",
+            filter=Q(status="closed"),
+        ),
+        terminated=Count(
+            "id",
+            filter=Q(status="terminated"),
+        ),
+    )
+
+    projects = Project.objects.annotate(
+        total_tasks=Count("tasks"),
+        not_started_tasks=Count(
+            "tasks",
+            filter=Q(tasks__status="not_started"),
+        ),
+        in_progress_tasks=Count(
+            "tasks",
+            filter=Q(tasks__status="in_progress"),
+        ),
+        waiting_for_approval_tasks=Count(
+            "tasks",
+            filter=Q(tasks__status="waiting_for_approval"),
+        ),
+        closed_tasks=Count(
+            "tasks",
+            filter=Q(tasks__status="closed"),
+        ),
+        terminated_tasks=Count(
+            "tasks",
+            filter=Q(tasks__status="terminated"),
+        ),
+    ).order_by("name")
+
     context.update(
         {
             "ticket_chart_labels": json.dumps(month_labels),
@@ -99,9 +198,16 @@ def dashboard_callback(request, context):
             "domain_renewal_count": len(domain_renewal_reminders),
             "form_test_reminders": form_test_reminders,
             "form_test_count": len(form_test_reminders),
-            "ticket_status_counts": ticket_status_counts,
             "daily_task_status_counts": daily_task_status_counts,
             "daily_task_changelist_url": reverse("admin:tasks_dailytask_changelist"),
+            "task_summary": task_summary,
+            "projects": projects,
+            "task_chart_labels": json.dumps(labels),
+            "task_not_started_counts": json.dumps(not_started_counts),
+            "task_in_progress_counts": json.dumps(in_progress_counts),
+            "task_waiting_counts": json.dumps(waiting_counts),
+            "task_closed_counts": json.dumps(closed_counts),
+            "task_terminated_counts": json.dumps(terminated_counts),
         }
     )
 
