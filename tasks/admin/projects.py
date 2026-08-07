@@ -2,6 +2,7 @@ from django.contrib import admin, messages
 from django.contrib.auth import get_user_model
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.timezone import localdate
 from unfold.admin import ModelAdmin, StackedInline, TabularInline
@@ -221,24 +222,6 @@ class ProjectHistoryAdmin(ModelAdmin):
         return False
 
 
-# class TasksDashboard(UnfoldModelAdminViewMixin, TemplateView):
-#     title = "Task Dashboard"
-#     permission_required = ()
-#     template_name = "tasks/tasks_dashboard.html"
-
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-
-#         context.update(
-#             {
-#                 # "projects": Project.objects.all().order_by("name"),
-#                 "task_list_url": reverse("admin:tasks_task_changelist"),
-#             }
-#         )
-
-#         return context
-
-
 class TaskActionStepInline(StackedInline):
     model = TaskActionStep
     extra = 0
@@ -345,16 +328,45 @@ class TaskAdmin(ModelAdmin):
 
     def changelist_view(self, request, extra_context=None):
         project_id = request.GET.get("project__id__exact")
+
+        # Get selected project first
+        selected_project = None
+
+        if project_id:
+            selected_project = (
+                Project.objects.prefetch_related("team_members")
+                .select_related(
+                    "department",
+                    "project_manager",
+                )
+                .filter(pk=project_id)
+                .first()
+            )
+        project_days_remaining = None
+        project_days_remaining_abs = None
+
+        if selected_project and selected_project.deadline:
+            today = timezone.localdate()
+
+            project_days_remaining = (selected_project.deadline - today).days
+
+            project_days_remaining_abs = abs(project_days_remaining)
+
         if request.method == "POST" and request.POST.get("_quick_add_task") == "1":
             title = request.POST.get("title")
             priority = request.POST.get("priority")
             due_date = request.POST.get("due_date") or localdate()
             status = request.POST.get("status") or "not_started"
             category_id = request.POST.get("category")
+
             selected_project_id = request.POST.get("project") or project_id
+
             if not title or not priority or not due_date:
-                messages.error(request, "Please fill all required fields.")
-                return redirect(request.path)
+                messages.error(
+                    request,
+                    "Please fill all required fields.",
+                )
+                return redirect(request.get_full_path())
 
             task = Task(
                 user=request.user,
@@ -363,6 +375,7 @@ class TaskAdmin(ModelAdmin):
                 due_date=due_date,
                 status=status,
             )
+
             if category_id:
                 task.category_id = category_id
 
@@ -371,20 +384,32 @@ class TaskAdmin(ModelAdmin):
 
             task.save()
 
-            messages.success(request, "Task added successfully.")
+            messages.success(
+                request,
+                "Task added successfully.",
+            )
+
             return redirect(request.get_full_path())
 
         extra_context = extra_context or {}
-        extra_context["task_categories"] = TaskCategory.objects.all()
-        extra_context["task_priorities"] = Task.PRIORITY
-        extra_context["task_statuses"] = Task.STATUS
-        extra_context["today"] = localdate()
-        extra_context["selected_project_id"] = project_id
-        extra_context["selected_project"] = (
-            Project.objects.get(id=project_id) if project_id else None
+
+        extra_context.update(
+            {
+                "task_categories": TaskCategory.objects.all(),
+                "task_priorities": Task.PRIORITY,
+                "task_statuses": Task.STATUS,
+                "today": localdate(),
+                "selected_project_id": project_id,
+                "selected_project": selected_project,
+                "project_days_remaining": project_days_remaining,
+                "project_days_remaining_abs": project_days_remaining_abs,
+            }
         )
 
-        return super().changelist_view(request, extra_context=extra_context)
+        return super().changelist_view(
+            request,
+            extra_context=extra_context,
+        )
 
     def save_model(self, request, obj, form, change):
         if not obj.pk:

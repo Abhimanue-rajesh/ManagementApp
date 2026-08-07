@@ -58,6 +58,14 @@ document.addEventListener("DOMContentLoaded", function () {
                 },
             ],
 
+            colors: [
+                "#ef4444", // Not Started
+                "#3b82f6", // In Progress
+                "#f59e0b", // Waiting for Approval
+                "#22c55e", // Completed
+                "#6b7280", // Terminated
+            ],
+
             chart: {
                 type: "bar",
                 height: 340,

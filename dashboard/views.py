@@ -208,6 +208,9 @@ def dashboard_callback(request, context):
             "task_waiting_counts": json.dumps(waiting_counts),
             "task_closed_counts": json.dumps(closed_counts),
             "task_terminated_counts": json.dumps(terminated_counts),
+            "task_list_url": reverse("admin:tasks_task_changelist"),
+            "total_projects": Project.objects.count(),
+            "project_list_url": reverse("admin:tasks_project_changelist"),
         }
     )
 

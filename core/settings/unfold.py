@@ -21,35 +21,13 @@ UNFOLD = {
         "show_search": True,
         "navigation": [
             {
-                "title": "Main",
+                "title": "Navigation",
                 "items": [
                     {
                         "title": "Dashboard",
                         "icon": "dashboard",
                         "link": reverse_lazy("admin:index"),
                         "permission": can_view_main_dashboard,
-                    },
-                    # {
-                    #     "title": "Tasks Dashboard",
-                    #     "icon": "folder_open",
-                    #     "link": reverse_lazy("admin:tasks_dashboard"),
-                    #     "permission": can_view_task_dashboard,
-                    # },
-                    {
-                        "title": "Credentials",
-                        "icon": "key",
-                        "link": reverse_lazy("admin:credentials_credential_changelist"),
-                        "permission": lambda request: request.user.has_perm(
-                            "credentials.view_credential"
-                        ),
-                    },
-                    {
-                        "title": "Quick Copy",
-                        "icon": "content_copy",
-                        "link": reverse_lazy("admin:quickcopy_quickcopy_changelist"),
-                        "permission": lambda request: request.user.has_perm(
-                            "quickcopy.view_quickcopy"
-                        ),
                     },
                 ],
             },
@@ -60,7 +38,7 @@ UNFOLD = {
                 "items": [
                     {
                         "title": "All Projects",
-                        "icon": "inventory_2",
+                        "icon": "folder_open",
                         "link": reverse_lazy("admin:tasks_project_changelist"),
                         "permission": lambda request: request.user.has_perm(
                             "tasks.view_project"
@@ -278,6 +256,29 @@ UNFOLD = {
                         "icon": "groups",
                         "link": reverse_lazy("group_members_dashboard"),
                         "permission": lambda request: request.user.is_superuser,
+                    },
+                ],
+            },
+            {
+                "title": "Other Tools",
+                "collapsible": True,
+                "separator": True,
+                "items": [
+                    {
+                        "title": "Credentials",
+                        "icon": "key",
+                        "link": reverse_lazy("admin:credentials_credential_changelist"),
+                        "permission": lambda request: request.user.has_perm(
+                            "credentials.view_credential"
+                        ),
+                    },
+                    {
+                        "title": "Quick Copy",
+                        "icon": "content_copy",
+                        "link": reverse_lazy("admin:quickcopy_quickcopy_changelist"),
+                        "permission": lambda request: request.user.has_perm(
+                            "quickcopy.view_quickcopy"
+                        ),
                     },
                 ],
             },

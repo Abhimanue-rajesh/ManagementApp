@@ -2,12 +2,95 @@
 {% load i18n %}
 {% block content %}
     {% if selected_project %}
-        <div class="mb-4 flex items-center justify-between rounded-lg">
-            <div class="p-2">
-                <p class="text-xs font-medium uppercase tracking-wide text-primary-600 dark:text-primary-400">Current Project</p>
-                <h2 class="mt-1 text-lg font-semibold text-font-important-light dark:text-font-important-dark">
-                    {{ selected_project.name }}
-                </h2>
+        <div class="mb-6 rounded-xl border border-base-200 bg-white p-5 shadow-sm dark:border-base-800 dark:bg-base-900">
+            <!-- Header -->
+            <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                <!-- Project Title -->
+                <div class="shrink-0 lg:w-52">
+                    <p class="text-xs font-medium uppercase tracking-wide text-primary-600 dark:text-primary-400">Current Project</p>
+                    <h2 class="mt-1 text-xl font-semibold text-font-important-light dark:text-font-important-dark">
+                        {{ selected_project.name }}
+                    </h2>
+                </div>
+                <!-- Project Details -->
+                <div class="grid flex-1 grid-cols-2 gap-x-6 gap-y-4 md:grid-cols-3 xl:grid-cols-6">
+                    <div class="border-l border-r border-gray-200 px-6 mx-2 dark:border-gray-700">
+                        <p class="text-xs text-font-subtle-light dark:text-font-subtle-dark">Department</p>
+                        <p class="mt-1 text-sm font-medium text-font-important-light dark:text-font-important-dark">
+                            {{ selected_project.department|default:"—" }}
+                        </p>
+                    </div>
+                    <div class="border-r border-gray-200 px-2 mx-2 dark:border-gray-700">
+                        <p class="text-xs text-font-subtle-light dark:text-font-subtle-dark">Project Type</p>
+                        <p class="mt-1 text-sm font-medium text-font-important-light dark:text-font-important-dark">
+                            {{ selected_project.project_type|default:"—" }}
+                        </p>
+                    </div>
+                    <div class="border-r border-gray-200 px-2 mx-2 dark:border-gray-700">
+                        <p class="text-xs text-font-subtle-light dark:text-font-subtle-dark">Status</p>
+                        <p class="mt-1 text-sm font-medium text-font-important-light dark:text-font-important-dark">
+                            {{ selected_project.get_status_display }}
+                        </p>
+                    </div>
+                    <div class="border-r border-gray-200 px-2 mx-2 dark:border-gray-700">
+                        <p class="text-xs text-font-subtle-light dark:text-font-subtle-dark">Project Manager</p>
+                        <p class="mt-1 text-sm font-medium text-font-important-light dark:text-font-important-dark">
+                            {% if selected_project.project_manager %}
+                                {{ selected_project.project_manager.get_full_name|default:selected_project.project_manager.username }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="border-r border-gray-200 px-2 mx-2 dark:border-gray-700">
+                        <p class="text-xs text-font-subtle-light dark:text-font-subtle-dark">Deadline</p>
+                        <p class="mt-1 text-sm font-medium text-font-important-light dark:text-font-important-dark">
+                            {% if selected_project.deadline %}
+                                {{ selected_project.deadline|date:"d M Y" }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="border-r border-gray-200 px-2 mx-2 dark:border-gray-700">
+                        <p class="text-xs text-font-subtle-light dark:text-font-subtle-dark">Days to Deadline</p>
+                        <p class="mt-1 text-sm font-semibold {% if project_days_remaining < 0 %} text-red-600 dark:text-red-400 {% elif project_days_remaining <= 3 %} text-orange-600 dark:text-orange-400 {% else %} text-green-600 dark:text-green-400 {% endif %}">
+                            {% if selected_project.deadline %}
+                                {% if project_days_remaining < 0 %}
+                                    {{ project_days_remaining_abs }} days overdue
+                                {% elif project_days_remaining == 0 %}
+                                    Due today
+                                {% else %}
+                                    {{ project_days_remaining }} days left
+                                {% endif %}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                <!-- Edit Project -->
+                <div class="shrink-0">
+                    <a href="{% url 'admin:tasks_project_change' selected_project.id %}"
+                       class="inline-flex items-center justify-center gap-2 rounded-default bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600">
+                        <span class="material-symbols-outlined md-18">edit_square</span>
+                        Edit Project
+                    </a>
+                </div>
+            </div>
+            <!-- Team Members -->
+            <div class="mt-5 border-t border-base-200 pt-4 dark:border-base-800">
+                <p class="text-xs text-font-subtle-light dark:text-font-subtle-dark">Team Members</p>
+                <div class="mt-2 flex flex-wrap gap-2">
+                    {% for member in selected_project.team_members.all %}
+                        <span class="inline-flex items-center gap-1 rounded-full bg-base-100 px-3 py-1 text-xs font-medium text-font-important-light dark:bg-base-800 dark:text-font-important-dark">
+                            <span class="material-symbols-outlined text-[15px]">person</span>
+                            {{ member.get_full_name|default:member.username }}
+                        </span>
+                    {% empty %}
+                        <span class="text-sm text-font-subtle-light dark:text-font-subtle-dark">No team members assigned</span>
+                    {% endfor %}
+                </div>
             </div>
         </div>
         <input type="hidden" name="project" value="{{ selected_project.id }}">
