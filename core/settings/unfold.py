@@ -37,14 +37,6 @@ UNFOLD = {
                         "permission": can_view_task_dashboard,
                     },
                     {
-                        "title": "Projects",
-                        "icon": "engineering",
-                        "link": reverse_lazy("admin:tasks_project_changelist"),
-                        "permission": lambda request: request.user.has_perm(
-                            "tasks.view_project"
-                        ),
-                    },
-                    {
                         "title": "Credentials",
                         "icon": "key",
                         "link": reverse_lazy("admin:credentials_credential_changelist"),
@@ -63,7 +55,46 @@ UNFOLD = {
                 ],
             },
             {
-                "title": "Task Management",
+                "title": "Projects",
+                "collapsible": True,
+                "separator": True,
+                "items": [
+                    {
+                        "title": "All Projects",
+                        "icon": "inventory_2",
+                        "link": reverse_lazy("admin:tasks_project_changelist"),
+                        "permission": lambda request: request.user.has_perm(
+                            "tasks.view_project"
+                        ),
+                    },
+                    {
+                        "title": "Categories",
+                        "icon": "inventory_2",
+                        "link": reverse_lazy("admin:tasks_taskcategory_changelist"),
+                        "permission": lambda request: request.user.has_perm(
+                            "tasks.view_taskcategory"
+                        ),
+                    },
+                    {
+                        "title": "Departments",
+                        "icon": "apartment",
+                        "link": reverse_lazy("admin:tasks_department_changelist"),
+                        "permission": lambda request: request.user.has_perm(
+                            "tasks.view_department"
+                        ),
+                    },
+                    {
+                        "title": "Types",
+                        "icon": "account_tree",
+                        "link": reverse_lazy("admin:tasks_projecttype_changelist"),
+                        "permission": lambda request: request.user.has_perm(
+                            "tasks.view_projecttype"
+                        ),
+                    },
+                ],
+            },
+            {
+                "title": "Tasks",
                 "collapsible": True,
                 "separator": True,
                 "items": [
@@ -87,30 +118,6 @@ UNFOLD = {
                         "link": reverse_lazy("admin:tasks_brand_changelist"),
                         "permission": lambda request: request.user.has_perm(
                             "tasks.view_brand"
-                        ),
-                    },
-                    {
-                        "title": "Task Categories",
-                        "icon": "inventory_2",
-                        "link": reverse_lazy("admin:tasks_taskcategory_changelist"),
-                        "permission": lambda request: request.user.has_perm(
-                            "tasks.view_taskcategory"
-                        ),
-                    },
-                    {
-                        "title": "Departments",
-                        "icon": "apartment",
-                        "link": reverse_lazy("admin:tasks_department_changelist"),
-                        "permission": lambda request: request.user.has_perm(
-                            "tasks.view_department"
-                        ),
-                    },
-                    {
-                        "title": "Project Types",
-                        "icon": "account_tree",
-                        "link": reverse_lazy("admin:tasks_projecttype_changelist"),
-                        "permission": lambda request: request.user.has_perm(
-                            "tasks.view_projecttype"
                         ),
                     },
                 ],
