@@ -206,11 +206,11 @@ class Task(models.Model):
     ]
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     title = models.CharField(max_length=200)
-    description = models.TextField()
+    description = models.TextField(blank=True)
     status = models.CharField(max_length=27, choices=STATUS, default="not_started")
     priority = models.CharField(max_length=27, choices=PRIORITY)
     pending_with = models.CharField(
-        max_length=100,
+        max_length=225,
         null=True,
         blank=True,
     )
@@ -226,7 +226,10 @@ class Task(models.Model):
     )
     created_at = models.DateField(auto_now_add=True, editable=False)
     updated_date = models.DateField(auto_now=True)
-    due_date = models.DateField(default=localdate)
+    due_date = models.DateField(
+        null=True,
+        blank=True,
+    )
     submitted_date = models.DateTimeField(null=True, blank=True)
 
     class Meta:
@@ -344,7 +347,7 @@ class TaskActivity(models.Model):
         on_delete=models.CASCADE,
         related_name="activities",
     )
-    activity_note = models.CharField(max_length=255)
+    activity_note = models.TextField()
     activity_date = models.DateField(default=localdate)
     created_at = models.DateTimeField(auto_now_add=True)
 
