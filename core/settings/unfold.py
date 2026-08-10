@@ -1,7 +1,7 @@
 from django.templatetags.static import static
 from django.urls import reverse, reverse_lazy
 
-from core.settings.permissions import (  # can_view_task_dashboard,
+from core.settings.permissions import (
     assigner_view_all_daily_tasks,
     can_view_main_dashboard,
     is_superuser,
@@ -42,6 +42,16 @@ UNFOLD = {
                         "link": reverse_lazy("admin:tasks_project_changelist"),
                         "permission": lambda request: request.user.has_perm(
                             "tasks.view_project"
+                        ),
+                    },
+                    {
+                        "title": "All Project Tasks",
+                        "icon": "folder_open",
+                        "link": lambda request: (
+                            f"{reverse_lazy('admin:tasks_task_changelist')}?all_tasks=1"
+                        ),
+                        "permission": lambda request: request.user.has_perm(
+                            "tasks.view_task"
                         ),
                     },
                     {

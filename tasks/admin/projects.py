@@ -122,6 +122,11 @@ class ProjectAdmin(ModelAdmin):
             obj.pk,
         )
 
+    def response_change(self, request, obj):
+        return redirect(
+            f"{reverse('admin:tasks_task_changelist')}" f"?project__id__exact={obj.pk}"
+        )
+
     def save_model(self, request, obj, form, change):
         previous_status = None
 
@@ -243,6 +248,7 @@ class TaskActivityAdmin(StackedInline):
 @admin.register(Task)
 class TaskAdmin(ModelAdmin):
     change_list_template = "tasks/change_list.html"
+    change_form_template = "tasks/task_change_form.html"
     list_display = (
         "project",
         "title",
@@ -439,25 +445,15 @@ class TaskAdmin(ModelAdmin):
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
 
-        # If status filter is selected, allow Django filter to work normally
-        if "status__exact" in request.GET:
-            return queryset
+        if (
+            request.resolver_match.url_name
+            == f"{self.opts.app_label}_{self.opts.model_name}_changelist"
+        ):
+            if "status__exact" in request.GET:
+                return queryset
+            return queryset.exclude(status="closed")
+        return queryset
 
-        # Default view: hide closed tasks
-        return queryset.exclude(status="closed")
-
-    # def get_urls(self):
-    #     custom_urls = [
-    #         path(
-    #             "dashboard/",
-    #             self.admin_site.admin_view(TasksDashboard.as_view(model_admin=self)),
-    #             name="tasks_dashboard",
-    #         ),
-    #     ]
-
-    #     return custom_urls + super().get_urls()
-
-    # This is done so that when in filter the project title is not shown in the table
     def get_list_display(self, request):
         list_display = list(super().get_list_display(request))
 
@@ -465,6 +461,33 @@ class TaskAdmin(ModelAdmin):
             list_display.remove("project")
 
         return tuple(list_display)
+
+    def change_view(
+        self,
+        request,
+        object_id,
+        form_url="",
+        extra_context=None,
+    ):
+        task = self.get_object(request, object_id)
+
+        extra_context = extra_context or {}
+
+        if task and task.project_id:
+            extra_context["project_url"] = (
+                f"{reverse('admin:tasks_task_changelist')}?project__id__exact={task.project_id}"
+            )
+            extra_context["project_button_text"] = "View Project"
+        else:
+            extra_context["project_url"] = reverse("admin:tasks_project_changelist")
+            extra_context["project_button_text"] = "All Projects"
+
+        return super().change_view(
+            request,
+            object_id,
+            form_url,
+            extra_context=extra_context,
+        )
 
 
 @admin.register(TaskCategory)

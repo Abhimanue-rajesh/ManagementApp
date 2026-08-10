@@ -1,0 +1,7 @@
+.custom-date-input::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+}
+
+.dark .custom-date-input::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+}
