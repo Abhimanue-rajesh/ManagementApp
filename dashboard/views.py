@@ -7,6 +7,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.timezone import localdate
 
+from subscriptions.models import SubscriptionTracker
 from tasks.models import DailyTask, Project, Task, TaskCategory
 from tickets.models import SupportTicket
 from web_management.models import DomainManager, WebFormManager
@@ -185,6 +186,11 @@ def dashboard_callback(request, context):
         ),
     ).order_by("name")
 
+    upcoming_subscriptions = SubscriptionTracker.objects.filter(
+        status="active",
+        debit_date__gte=timezone.localdate(),
+    ).order_by("debit_date")[:5]
+
     context.update(
         {
             "ticket_chart_labels": json.dumps(month_labels),
@@ -211,6 +217,7 @@ def dashboard_callback(request, context):
             "task_list_url": reverse("admin:tasks_task_changelist"),
             "total_projects": Project.objects.count(),
             "project_list_url": reverse("admin:tasks_project_changelist"),
+            "upcoming_subscriptions": upcoming_subscriptions,
         }
     )
 

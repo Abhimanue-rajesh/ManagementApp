@@ -27,7 +27,7 @@
                 </a>
             </div>
         </div>
-        <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <div class="grid grid-cols-1 gap-4 xl:grid-cols-3">
             {% if perms.tickets.view_supportticket %}
                 <!-- Ticket Chart -->
                 <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-base-700 dark:bg-base-900">
@@ -53,6 +53,73 @@
                 <script id="task-waiting-counts" type="application/json">{{ task_waiting_counts|safe }}</script>
                 <script id="task-closed-counts" type="application/json">{{ task_closed_counts|safe }}</script>
                 <script id="task-terminated-counts" type="application/json">{{ task_terminated_counts|safe }}</script>
+            </div>
+            <div class="rounded border border-base-200 bg-white p-4 shadow-sm dark:border-base-800 dark:bg-base-900">
+                <!-- Header -->
+                <div class="mb-4 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-base font-semibold text-font-important-light dark:text-font-important-dark">Subscription Reminders</h2>
+                        <p class="mt-1 text-xs text-font-subtle-light dark:text-font-subtle-dark">Upcoming active subscription payments</p>
+                    </div>
+                    <a href="{% url 'admin:subscriptions_subscriptiontracker_changelist' %}"
+                       class="text-sm font-medium text-primary-600 hover:text-primary-700">View All</a>
+                </div>
+                {% if upcoming_subscriptions %}
+                    <div class="space-y-2">
+                        {% for subscription in upcoming_subscriptions %}
+                            <!-- Subscription Box -->
+                            <div class="flex items-center justify-between rounded border border-base-200 bg-base-50 px-4 py-3 dark:border-base-700 dark:bg-base-800">
+                                <!-- Left -->
+                                <div class="min-w-0">
+                                    <p class="truncate text-sm font-semibold text-font-important-light dark:text-font-important-dark">
+                                        {{ subscription.platform }}
+                                    </p>
+                                    <div class="mt-1 flex items-center gap-2">
+                                        {% if subscription.payment_timing %}
+                                            <span class="text-xs text-font-subtle-light dark:text-font-subtle-dark">{{ subscription.payment_timing }}</span>
+                                        {% endif %}
+                                        {% if subscription.pricing %}
+                                            <span class="text-xs font-medium text-font-important-light dark:text-font-important-dark">
+                                                {{ subscription.currency|default:"" }}
+                                                {{ subscription.pricing }}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <!-- Right -->
+                                <div class="ml-4 shrink-0 text-right">
+                                    <p class="text-sm font-medium text-font-important-light dark:text-font-important-dark">
+                                        {{ subscription.debit_date|date:"d M Y" }}
+                                    </p>
+                                    <div class="mt-1">
+                                        {% if subscription.days_until_debit == 0 %}
+                                            <span class="inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700 dark:bg-orange-500/20 dark:text-orange-400">
+                                                Due Today
+                                            </span>
+                                        {% elif subscription.days_until_debit < 0 %}
+                                            <span class="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-500/20 dark:text-red-400">
+                                                Overdue
+                                            </span>
+                                        {% elif subscription.days_until_debit <= 7 %}
+                                            <span class="inline-flex rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-400">
+                                                {{ subscription.days_until_debit }} days left
+                                            </span>
+                                        {% else %}
+                                            <span class="inline-flex rounded-full bg-base-200 px-2 py-0.5 text-xs font-medium text-font-subtle-light dark:bg-base-700 dark:text-font-subtle-dark">
+                                                {{ subscription.days_until_debit }} days left
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <!-- Empty State -->
+                    <div class="rounded border border-dashed border-base-300 px-4 py-6 text-center dark:border-base-700">
+                        <p class="text-sm text-font-subtle-light dark:text-font-subtle-dark">No upcoming subscriptions.</p>
+                    </div>
+                {% endif %}
             </div>
         </div>
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
