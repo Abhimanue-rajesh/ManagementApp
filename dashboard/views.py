@@ -1,8 +1,12 @@
 import json
 
 from dateutil.relativedelta import relativedelta
+from django.contrib import admin
+
+# from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import Count, Q
 from django.db.models.functions import TruncMonth
+from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.timezone import localdate
@@ -222,3 +226,16 @@ def dashboard_callback(request, context):
     )
 
     return context
+
+
+def time_checker(request):
+    context = {
+        **admin.site.each_context(request),
+        "title": "Time Checker",
+    }
+
+    return render(
+        request,
+        "dashboard/time_checker.html",
+        context,
+    )

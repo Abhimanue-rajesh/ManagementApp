@@ -4,6 +4,7 @@ from django.urls import include, path, re_path
 from django.views.static import serve
 
 from dashboard.admin import group_members_dashboard
+from dashboard.views import time_checker
 
 urlpatterns = [
     re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}),
@@ -13,6 +14,11 @@ urlpatterns = [
         "admin/group-members/",
         admin.site.admin_view(group_members_dashboard),
         name="group_members_dashboard",
+    ),
+    path(
+        "admin/time-checker/",
+        admin.site.admin_view(time_checker),
+        name="time_checker",
     ),
     path(
         "", admin.site.urls

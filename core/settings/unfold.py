@@ -290,6 +290,11 @@ UNFOLD = {
                             "quickcopy.view_quickcopy"
                         ),
                     },
+                    {
+                        "title": "Time Checker",
+                        "icon": "schedule",
+                        "link": reverse_lazy("time_checker"),
+                    },
                 ],
             },
             {

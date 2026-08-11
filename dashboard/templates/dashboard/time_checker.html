@@ -1,0 +1,143 @@
+{% extends "admin/base.html" %}
+{% load admin_urls i18n unfold static %}
+{% block title %}
+    {% if subtitle %}{{ subtitle }} |{% endif %}
+    {{ title }} | {{ site_title|default:_("Django site admin") }}
+{% endblock title %}
+{% block branding %}
+    {% include "unfold/helpers/site_branding.html" %}
+{% endblock branding %}
+{% block extrahead %}
+    {{ block.super }}
+    <script src="{% static 'js/time_checker.js' %}" defer></script>
+{% endblock extrahead %}
+{% block content %}
+    <div class="flex flex-col gap-6">
+        <!-- Header -->
+        <div>
+            <h1 class="text-xl font-semibold text-font-important-light dark:text-font-important-dark">Time Checker</h1>
+            <p class="mt-1 text-sm text-font-subtle-light dark:text-font-subtle-dark">
+                Compare meeting times across your company locations.
+            </p>
+        </div>
+        <!-- Meeting Time Card -->
+        <div class=" rounded-default border border-base-200 p-6 shadow-xs dark:border-base-800 dark:bg-base-900 ">
+            <div class="mb-5">
+                <h2 class="text-base font-semibold text-font-important-light dark:text-font-important-dark">Meeting Time</h2>
+                <p class="mt-1 text-sm text-font-subtle-light dark:text-font-subtle-dark">
+                    Select the original meeting date, time and location.
+                </p>
+            </div>
+            <div class="grid grid-cols-1 gap-6 xl:grid-cols-3">
+                <!-- Date -->
+                <div>
+                    <label for="meeting-date"
+                           class="mb-2 block text-sm font-medium text-font-important-light dark:text-font-important-dark">
+                        Date
+                    </label>
+                    <div class="relative">
+                        <span class=" pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-base-400 ">
+                            calendar_month
+                        </span>
+                        <input type="date"
+                               id="meeting-date"
+                               onclick="this.showPicker()"
+                               class="custom-date-input w-full rounded-default border border-base-200 bg-white py-2.5 pl-10 pr-3 text-sm text-font-default-light outline-none transition focus:border-primary-600 focus:ring-1 focus:ring-primary-600 dark:border-base-700 dark:bg-base-900 dark:text-font-default-dark ">
+                    </div>
+                </div>
+                <!-- Time -->
+                <div>
+                    <label class="mb-2 block text-sm font-medium text-font-important-light dark:text-font-important-dark">Time</label>
+                    <div class="flex items-center gap-2">
+                        <!-- Hour -->
+                        <select id="meeting-hour"
+                                class=" min-w-20 flex-1 rounded-default border border-base-200 bg-white px-3 py-2.5 text-sm text-font-default-light outline-none transition focus:border-primary-600 focus:ring-1 focus:ring-primary-600 dark:border-base-700 dark:bg-base-900 dark:text-font-default-dark ">
+                            <option value="">Hour</option>
+                            <option value="1">01</option>
+                            <option value="2">02</option>
+                            <option value="3">03</option>
+                            <option value="4">04</option>
+                            <option value="5">05</option>
+                            <option value="6">06</option>
+                            <option value="7">07</option>
+                            <option value="8">08</option>
+                            <option value="9">09</option>
+                            <option value="10">10</option>
+                            <option value="11">11</option>
+                            <option value="12">12</option>
+                        </select>
+                        <span class="text-lg font-semibold text-base-400">:</span>
+                        <!-- Minute -->
+                        <select id="meeting-minute"
+                                class=" min-w-20 flex-1 rounded-default border border-base-200 bg-white px-3 py-2.5 text-sm text-font-default-light outline-none transition focus:border-primary-600 focus:ring-1 focus:ring-primary-600 dark:border-base-700 dark:bg-base-900 dark:text-font-default-dark ">
+                            <option value="00">00</option>
+                            <option value="05">05</option>
+                            <option value="10">10</option>
+                            <option value="15">15</option>
+                            <option value="20">20</option>
+                            <option value="25">25</option>
+                            <option value="30">30</option>
+                            <option value="35">35</option>
+                            <option value="40">40</option>
+                            <option value="45">45</option>
+                            <option value="50">50</option>
+                            <option value="55">55</option>
+                        </select>
+                        <!-- AM / PM -->
+                        <div class=" flex rounded-default border border-base-200 bg-base-50 p-1 dark:border-base-700 dark:bg-base-800 ">
+                            <button type="button"
+                                    id="am-button"
+                                    data-period="AM"
+                                    class=" period-button rounded-default px-3 py-1.5 text-xs font-medium transition ">
+                                AM
+                            </button>
+                            <button type="button"
+                                    id="pm-button"
+                                    data-period="PM"
+                                    class=" period-button rounded-default px-3 py-1.5 text-xs font-medium transition ">
+                                PM
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Timezone -->
+                <div>
+                    <label for="source-timezone"
+                           class="mb-2 block text-sm font-medium text-font-important-light dark:text-font-important-dark">
+                        Time Is In
+                    </label>
+                    <div class="relative">
+                        <span class=" pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-base-400 ">
+                            public
+                        </span>
+                        <select id="source-timezone"
+                                class=" w-full appearance-none rounded-default border border-base-200 py-2.5 pl-10 pr-8 text-sm text-font-default-light outline-none transition focus:border-primary-600 focus:ring-1 focus:ring-primary-600 dark:border-base-700 dark:bg-base-900 dark:text-font-default-dark ">
+                            <option value="Asia/Dubai">UAE</option>
+                            <option value="Asia/Riyadh">KSA</option>
+                            <option value="Asia/Kolkata">India</option>
+                            <option value="Asia/Qatar">Qatar</option>
+                            <option value="Asia/Muscat">Oman</option>
+                            <option value="Europe/London">UK</option>
+                        </select>
+                        <span class=" pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-base-400 ">
+                            expand_more
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Conversion Header -->
+        <div class="flex items-end justify-between gap-4">
+            <div>
+                <h2 class="text-lg font-semibold text-font-important-light dark:text-font-important-dark">Converted Times</h2>
+                <p id="conversion-description"
+                   class="mt-1 text-sm text-font-subtle-light dark:text-font-subtle-dark">
+                    Select a date and meeting time to view conversions.
+                </p>
+            </div>
+        </div>
+        <!-- Result cards -->
+        <div id="timezone-results"
+             class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"></div>
+    </div>
+{% endblock content %}
