@@ -9,6 +9,7 @@ cssbeautifier==1.15.4
 distlib==0.4.0
 Django==6.0.5
 django-appconf==1.2.0
+django-easy-audit==1.3.9
 django-extensions==4.1
 django-lumen==0.2.3
 django-unfold==0.93.0
