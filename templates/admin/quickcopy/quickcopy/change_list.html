@@ -1,0 +1,52 @@
+{% extends "admin/change_list.html" %}
+{% block content %}
+    {{ block.super }}
+    <!-- DRAWER BACKDROP -->
+    <div id="quickcopy-drawer-backdrop"
+         style="display:none;
+                position:fixed;
+                inset:0;
+                background:rgba(0, 0, 0, 0.4);
+                z-index:9998"></div>
+    <!-- DRAWER -->
+    <div id="quickcopy-drawer"
+         style="position:fixed;
+                top:0;
+                right:0;
+                width:min(650px, 100%);
+                height:100vh;
+                background:#101828;
+                z-index:9999;
+                box-shadow:-10px 0 30px rgba(0,0,0,0.15);
+                transform:translateX(100%);
+                transition:transform 0.25s ease;
+                overflow-y:auto">
+        <!-- HEADER -->
+        <div style="position:sticky;
+                    top:0;
+                    z-index:10;
+                    display:flex;
+                    align-items:center;
+                    justify-content:space-between;
+                    padding:20px 24px;
+                    background:#101828;
+                    border-bottom:1px solid #e5e7eb">
+            <div>
+                <h2 id="quickcopy-drawer-title"
+                    style="margin:0;
+                           font-size:18px;
+                           font-weight:600">Edit Quick Copy</h2>
+                <div style=" font-size:13px; margin-top:3px; ">Update the selected Quick Copy item</div>
+            </div>
+            <button type="button"
+                    id="quickcopy-drawer-close"
+                    style="border:0;
+                           background:#101828;
+                           cursor:pointer;
+                           font-size:24px;
+                           line-height:1">&times;</button>
+        </div>
+        <!-- CONTENT -->
+        <div id="quickcopy-drawer-content" style="padding:24px;"></div>
+    </div>
+{% endblock %}
