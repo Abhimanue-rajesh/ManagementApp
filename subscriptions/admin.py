@@ -75,7 +75,7 @@ class SubscriptionTrackerAdmin(ModelAdmin):
         "is_overdue",
     )
 
-    ordering = ("status",)
+    ordering = ("status", "debit_date")
 
     fieldsets = (
         (

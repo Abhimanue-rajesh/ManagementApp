@@ -7,12 +7,11 @@ from django.contrib import admin
 from django.db.models import Count, Q
 from django.db.models.functions import TruncMonth
 from django.shortcuts import render
-from django.urls import reverse
 from django.utils import timezone
 from django.utils.timezone import localdate
 
 from subscriptions.models import SubscriptionTracker
-from tasks.models import DailyTask, Project, Task, TaskCategory
+from tasks.models import Task, TaskCategory
 from tickets.models import SupportTicket
 from web_management.models import DomainManager, WebFormManager
 
@@ -68,26 +67,26 @@ def dashboard_callback(request, context):
         if form.needs_testing()
     ]
 
-    daily_tasks_queryset = DailyTask.objects.select_related(
-        "user",
-        "brand",
-        "created_by",
-    )
+    # daily_tasks_queryset = DailyTask.objects.select_related(
+    #     "user",
+    #     "brand",
+    #     "created_by",
+    # )
 
-    if not request.user.is_superuser:
-        daily_tasks_queryset = daily_tasks_queryset.filter(user=request.user)
+    # if not request.user.is_superuser:
+    #     daily_tasks_queryset = daily_tasks_queryset.filter(user=request.user)
 
-    today_daily_tasks = daily_tasks_queryset.filter(task_date=today).order_by(
-        "-created_at"
-    )
+    # today_daily_tasks = daily_tasks_queryset.filter(task_date=today).order_by(
+    #     "-created_at"
+    # )
 
-    daily_task_status_counts = {
-        "total": today_daily_tasks.count(),
-        "not_started": today_daily_tasks.filter(status="not_started").count(),
-        "in_progress": today_daily_tasks.filter(status="in_progress").count(),
-        "completed": today_daily_tasks.filter(status="completed").count(),
-        "on_hold": today_daily_tasks.filter(status="on_hold").count(),
-    }
+    # daily_task_status_counts = {
+    #     "total": today_daily_tasks.count(),
+    #     "not_started": today_daily_tasks.filter(status="not_started").count(),
+    #     "in_progress": today_daily_tasks.filter(status="in_progress").count(),
+    #     "completed": today_daily_tasks.filter(status="completed").count(),
+    #     "on_hold": today_daily_tasks.filter(status="on_hold").count(),
+    # }
 
     today = localdate()
     start_month = today.replace(day=1) - relativedelta(months=4)
@@ -166,29 +165,29 @@ def dashboard_callback(request, context):
         ),
     )
 
-    projects = Project.objects.annotate(
-        total_tasks=Count("tasks"),
-        not_started_tasks=Count(
-            "tasks",
-            filter=Q(tasks__status="not_started"),
-        ),
-        in_progress_tasks=Count(
-            "tasks",
-            filter=Q(tasks__status="in_progress"),
-        ),
-        waiting_for_approval_tasks=Count(
-            "tasks",
-            filter=Q(tasks__status="waiting_for_approval"),
-        ),
-        closed_tasks=Count(
-            "tasks",
-            filter=Q(tasks__status="closed"),
-        ),
-        terminated_tasks=Count(
-            "tasks",
-            filter=Q(tasks__status="terminated"),
-        ),
-    ).order_by("name")
+    # projects = Project.objects.annotate(
+    #     total_tasks=Count("tasks"),
+    #     not_started_tasks=Count(
+    #         "tasks",
+    #         filter=Q(tasks__status="not_started"),
+    #     ),
+    #     in_progress_tasks=Count(
+    #         "tasks",
+    #         filter=Q(tasks__status="in_progress"),
+    #     ),
+    #     waiting_for_approval_tasks=Count(
+    #         "tasks",
+    #         filter=Q(tasks__status="waiting_for_approval"),
+    #     ),
+    #     closed_tasks=Count(
+    #         "tasks",
+    #         filter=Q(tasks__status="closed"),
+    #     ),
+    #     terminated_tasks=Count(
+    #         "tasks",
+    #         filter=Q(tasks__status="terminated"),
+    #     ),
+    # ).order_by("name")
 
     upcoming_subscriptions = SubscriptionTracker.objects.filter(
         status="active",
@@ -208,19 +207,19 @@ def dashboard_callback(request, context):
             "domain_renewal_count": len(domain_renewal_reminders),
             "form_test_reminders": form_test_reminders,
             "form_test_count": len(form_test_reminders),
-            "daily_task_status_counts": daily_task_status_counts,
-            "daily_task_changelist_url": reverse("admin:tasks_dailytask_changelist"),
+            # "daily_task_status_counts": daily_task_status_counts,
+            # "daily_task_changelist_url": reverse("admin:tasks_dailytask_changelist"),
             "task_summary": task_summary,
-            "projects": projects,
+            # "projects": projects,
             "task_chart_labels": json.dumps(labels),
             "task_not_started_counts": json.dumps(not_started_counts),
             "task_in_progress_counts": json.dumps(in_progress_counts),
             "task_waiting_counts": json.dumps(waiting_counts),
             "task_closed_counts": json.dumps(closed_counts),
             "task_terminated_counts": json.dumps(terminated_counts),
-            "task_list_url": reverse("admin:tasks_task_changelist"),
-            "total_projects": Project.objects.count(),
-            "project_list_url": reverse("admin:tasks_project_changelist"),
+            # "task_list_url": reverse("admin:tasks_task_changelist"),
+            # "total_projects": Project.objects.count(),
+            # "project_list_url": reverse("admin:tasks_project_changelist"),
             "upcoming_subscriptions": upcoming_subscriptions,
         }
     )

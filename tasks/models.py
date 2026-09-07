@@ -1,182 +1,17 @@
-from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from django.utils.timezone import localdate
 
 
-class Department(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    is_active = models.BooleanField(default=True)
-
-    class Meta:
-        ordering = ["name"]
-        verbose_name = "Department"
-        verbose_name_plural = "Departments"
+class Brand(models.Model):
+    name = models.CharField(max_length=100)
 
     def __str__(self):
         return self.name
 
-
-class ProjectType(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    is_active = models.BooleanField(default=True)
-
     class Meta:
-        ordering = ["name"]
-        verbose_name = "Project Type"
-        verbose_name_plural = "Project Types"
-
-    def __str__(self):
-        return self.name
-
-
-class Project(models.Model):
-    STATUS_CHOICES = [
-        ("not_started", "Not Started"),
-        ("in_progress", "In Progress"),
-        ("critical", "Critical"),
-        ("urgent", "Urgent"),
-        ("blocked", "Blocked"),
-        ("completed", "Completed"),
-        ("manager_accepted", "Manager Accepted"),
-    ]
-
-    name = models.CharField(max_length=150)
-
-    description = models.TextField(
-        blank=True,
-    )
-
-    department = models.ForeignKey(
-        Department,
-        on_delete=models.PROTECT,
-        related_name="projects",
-        null=True,
-        blank=True,
-    )
-
-    project_type = models.ForeignKey(
-        ProjectType,
-        on_delete=models.PROTECT,
-        related_name="projects",
-        null=True,
-        blank=True,
-    )
-
-    status = models.CharField(
-        max_length=30,
-        choices=STATUS_CHOICES,
-        default="not_started",
-    )
-
-    team_members = models.ManyToManyField(
-        settings.AUTH_USER_MODEL,
-        related_name="assigned_projects",
-        blank=True,
-    )
-
-    project_manager = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="managed_projects",
-    )
-
-    start_date = models.DateField(
-        default=localdate,
-    )
-
-    deadline = models.DateField(
-        null=True,
-        blank=True,
-    )
-
-    created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="created_projects",
-        editable=False,
-    )
-
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        null=True,
-        blank=True,
-    )
-
-    updated_at = models.DateTimeField(
-        auto_now=True,
-    )
-
-    class Meta:
-        ordering = ["-updated_at"]
-        verbose_name = "Project"
-        verbose_name_plural = "Projects"
-
-    def __str__(self):
-        return self.name
-
-
-class ProjectHistory(models.Model):
-    ACTION_CHOICES = [
-        ("created", "Created"),
-        ("updated", "Updated"),
-        ("status_changed", "Status Changed"),
-        ("member_added", "Team Member Added"),
-        ("member_removed", "Team Member Removed"),
-        ("comment", "Comment"),
-    ]
-
-    project = models.ForeignKey(
-        Project,
-        on_delete=models.CASCADE,
-        related_name="history",
-    )
-
-    action = models.CharField(
-        max_length=30,
-        choices=ACTION_CHOICES,
-        default="updated",
-    )
-
-    previous_status = models.CharField(
-        max_length=30,
-        choices=Project.STATUS_CHOICES,
-        blank=True,
-    )
-
-    new_status = models.CharField(
-        max_length=30,
-        choices=Project.STATUS_CHOICES,
-        blank=True,
-    )
-
-    description = models.TextField(
-        blank=True,
-    )
-
-    updated_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="project_history_updates",
-    )
-
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-    )
-
-    class Meta:
-        ordering = ["-created_at"]
-        verbose_name = "Project History"
-        verbose_name_plural = "Project History"
-
-    def __str__(self):
-        return f"{self.project} - {self.get_action_display()}"
+        verbose_name = "Brand"
+        verbose_name_plural = "Brands"
 
 
 class TaskCategory(models.Model):
@@ -204,7 +39,6 @@ class Task(models.Model):
         ("waiting_for_approval", "Waiting For Approval"),
         ("closed", "Closed"),
     ]
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     status = models.CharField(max_length=27, choices=STATUS, default="not_started")
@@ -214,12 +48,12 @@ class Task(models.Model):
         null=True,
         blank=True,
     )
-    project = models.ForeignKey(
-        Project,
+    brand = models.ForeignKey(
+        Brand,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="tasks",
+        related_name="daily_tasks",
     )
     category = models.ForeignKey(
         TaskCategory, on_delete=models.SET_NULL, null=True, blank=True

@@ -2,10 +2,8 @@ from django.templatetags.static import static
 from django.urls import reverse, reverse_lazy
 
 from core.settings.permissions import (
-    assigner_view_all_daily_tasks,
     can_view_main_dashboard,
     is_superuser,
-    view_only_workers_task,
 )
 
 UNFOLD = {
@@ -29,53 +27,27 @@ UNFOLD = {
                         "link": reverse_lazy("admin:index"),
                         "permission": can_view_main_dashboard,
                     },
-                ],
-            },
-            {
-                "title": "Projects",
-                "collapsible": True,
-                "separator": True,
-                "items": [
                     {
-                        "title": "All Projects",
-                        "icon": "folder_open",
-                        "link": reverse_lazy("admin:tasks_project_changelist"),
+                        "title": "EBS Tickets",
+                        "icon": "confirmation_number",
+                        "link": reverse_lazy("admin:tickets_supportticket_changelist"),
                         "permission": lambda request: request.user.has_perm(
-                            "tasks.view_project"
+                            "tickets.view_supportticket"
                         ),
                     },
                     {
-                        "title": "All Project Tasks",
-                        "icon": "folder_open",
-                        "link": lambda request: (
-                            f"{reverse_lazy('admin:tasks_task_changelist')}?all_tasks=1"
-                        ),
-                        "permission": lambda request: request.user.has_perm(
-                            "tasks.view_task"
-                        ),
+                        "title": "Tasks",
+                        "icon": "today",
+                        "link": reverse_lazy("admin:tasks_task_changelist"),
                     },
                     {
-                        "title": "Categories",
-                        "icon": "inventory_2",
-                        "link": reverse_lazy("admin:tasks_taskcategory_changelist"),
-                        "permission": lambda request: request.user.has_perm(
-                            "tasks.view_taskcategory"
+                        "title": "Subscriptions",
+                        "icon": "subscriptions",
+                        "link": reverse_lazy(
+                            "admin:subscriptions_subscriptiontracker_changelist"
                         ),
-                    },
-                    {
-                        "title": "Departments",
-                        "icon": "apartment",
-                        "link": reverse_lazy("admin:tasks_department_changelist"),
                         "permission": lambda request: request.user.has_perm(
-                            "tasks.view_department"
-                        ),
-                    },
-                    {
-                        "title": "Types",
-                        "icon": "account_tree",
-                        "link": reverse_lazy("admin:tasks_projecttype_changelist"),
-                        "permission": lambda request: request.user.has_perm(
-                            "tasks.view_projecttype"
+                            "subscriptions.view_subscriptiontracker"
                         ),
                     },
                 ],
@@ -85,20 +57,6 @@ UNFOLD = {
                 "collapsible": True,
                 "separator": True,
                 "items": [
-                    {
-                        "title": "All Daily Tasks",
-                        "icon": "today",
-                        "link": reverse_lazy("admin:daily_task_dashboard"),
-                        "permission": assigner_view_all_daily_tasks,
-                    },
-                    {
-                        "title": "My Daily Tasks",
-                        "icon": "today",
-                        "link": lambda request: (
-                            f"{reverse_lazy('admin:tasks_dailytask_changelist')}?my_tasks=1"
-                        ),
-                        "permission": view_only_workers_task,
-                    },
                     {
                         "title": "Brands",
                         "icon": "sell",
@@ -114,14 +72,6 @@ UNFOLD = {
                 "collapsible": True,
                 "separator": True,
                 "items": [
-                    {
-                        "title": "All Tickets",
-                        "icon": "confirmation_number",
-                        "link": reverse_lazy("admin:tickets_supportticket_changelist"),
-                        "permission": lambda request: request.user.has_perm(
-                            "tickets.view_supportticket"
-                        ),
-                    },
                     {
                         "title": "Ticket History",
                         "icon": "history",
@@ -151,20 +101,10 @@ UNFOLD = {
                 ],
             },
             {
-                "title": "Subscription Management",
+                "title": "Subscriptions",
                 "collapsible": True,
                 "separator": True,
                 "items": [
-                    {
-                        "title": "Subscriptions",
-                        "icon": "subscriptions",
-                        "link": reverse_lazy(
-                            "admin:subscriptions_subscriptiontracker_changelist"
-                        ),
-                        "permission": lambda request: request.user.has_perm(
-                            "subscriptions.view_subscriptiontracker"
-                        ),
-                    },
                     {
                         "title": "Payment Cards",
                         "icon": "credit_card",
