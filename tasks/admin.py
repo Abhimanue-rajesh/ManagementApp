@@ -2,7 +2,7 @@ from django.contrib import admin, messages
 from django.contrib.auth import get_user_model
 from django.shortcuts import redirect
 from django.utils.timezone import localdate
-from unfold.admin import ModelAdmin, StackedInline
+from unfold.admin import ModelAdmin, StackedInline, TabularInline
 from unfold.decorators import display
 
 from tasks.models import (
@@ -13,6 +13,8 @@ from tasks.models import (
     TaskActionStep,
     TaskActivity,
     TaskCategory,
+    TaskEmail,
+    TaskEmailReminder,
 )
 
 
@@ -32,6 +34,18 @@ class TaskActionStepInline(StackedInline):
 class TaskActivityAdmin(StackedInline):
     model = TaskActivity
     extra = 0
+
+
+class TaskEmailInline(TabularInline):
+    model = TaskEmail
+    extra = 0
+
+    fields = (
+        "subject",
+        "sent_at",
+    )
+
+    show_change_link = True
 
 
 @admin.register(Task)
@@ -75,9 +89,10 @@ class TaskAdmin(ModelAdmin):
     inlines = [
         TaskActivityAdmin,
         TaskActionStepInline,
+        TaskEmailInline,
     ]
 
-    ordering = ("-created_at",)
+    # ordering = ("-created_at",)
 
     fieldsets = (
         (
@@ -229,3 +244,145 @@ class PendingWithAdmin(ModelAdmin):
 
     class Media:
         js = ("js/admin_row_click.js",)
+
+
+class TaskEmailReminderInline(TabularInline):
+    model = TaskEmailReminder
+    extra = 0
+
+    fields = (
+        "reminder_date",
+        "note",
+        "sent",
+        "sent_at",
+    )
+
+    readonly_fields = ("sent_at",)
+
+    # ordering = ("-reminder_date",)
+
+    show_change_link = True
+
+
+@admin.register(TaskEmail)
+class TaskEmailAdmin(ModelAdmin):
+    list_display = (
+        "subject",
+        "task",
+        "sent_at",
+        "reminder_count",
+    )
+
+    list_filter = ("sent_at",)
+
+    search_fields = (
+        "subject",
+        "sender",
+        "recipients",
+        "task__title",
+    )
+
+    autocomplete_fields = ("task",)
+
+    # readonly_fields = ("created_at",)
+
+    # ordering = ("-sent_at",)
+
+    inlines = [
+        TaskEmailReminderInline,
+    ]
+
+    fieldsets = (
+        (
+            "Email Details",
+            {
+                "fields": (
+                    "task",
+                    "subject",
+                    "sender",
+                    "recipients",
+                ),
+            },
+        ),
+        (
+            "Dates",
+            {
+                "fields": (("sent_at", "received_at"),),
+            },
+        ),
+    )
+
+    @admin.display(description="Reminders")
+    def reminder_count(self, obj):
+        return obj.reminders.count()
+
+
+@admin.register(TaskEmailReminder)
+class TaskEmailReminderAdmin(ModelAdmin):
+    list_display = (
+        "email",
+        "task_display",
+        "reminder_date",
+        "sent_badge",
+        "sent_at",
+    )
+
+    list_filter = (
+        "sent",
+        "reminder_date",
+        "sent_at",
+    )
+
+    search_fields = (
+        "email__subject",
+        "email__sender",
+        "email__recipients",
+        "email__task__title",
+        "note",
+    )
+
+    autocomplete_fields = ("email",)
+
+    readonly_fields = ("created_at",)
+
+    # ordering = (
+    #     "sent",
+    #     "reminder_date",
+    # )
+
+    fieldsets = (
+        (
+            "Reminder Details",
+            {
+                "fields": (
+                    "email",
+                    "reminder_date",
+                    "note",
+                    "sent",
+                ),
+            },
+        ),
+        (
+            "Dates",
+            {
+                "fields": (
+                    "sent_at",
+                    "created_at",
+                ),
+            },
+        ),
+    )
+
+    @admin.display(description="Task")
+    def task_display(self, obj):
+        return obj.email.task
+
+    @display(
+        description="Status",
+        label={
+            True: "success",
+            False: "warning",
+        },
+    )
+    def sent_badge(self, obj):
+        return obj.sent

@@ -75,6 +75,13 @@ UNFOLD = {
                         "icon": "hourglass_top",
                         "link": reverse_lazy("admin:tasks_pendingwith_changelist"),
                     },
+                    {
+                        "title": "Email Reminders",
+                        "icon": "notifications_active",
+                        "link": reverse_lazy(
+                            "admin:tasks_taskemailreminder_changelist"
+                        ),
+                    },
                 ],
             },
             {

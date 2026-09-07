@@ -215,3 +215,50 @@ class TaskActivity(models.Model):
 
     def __str__(self):
         return f"{self.task.title} - {self.activity_note}"
+
+
+class TaskEmail(models.Model):
+    task = models.ForeignKey(
+        Task,
+        on_delete=models.CASCADE,
+        related_name="emails",
+    )
+    subject = models.CharField(
+        max_length=255,
+        blank=True,
+    )
+    sent_at = models.DateField(
+        null=True,
+        blank=True,
+    )
+
+    def __str__(self):
+        return self.subject or f"Email #{self.pk}"
+
+
+class TaskEmailReminder(models.Model):
+    email = models.ForeignKey(
+        TaskEmail,
+        on_delete=models.CASCADE,
+        related_name="reminders",
+    )
+    reminder_date = models.DateTimeField()
+    note = models.TextField(
+        blank=True,
+    )
+    sent = models.BooleanField(
+        default=False,
+    )
+    sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    def __str__(self):
+        return f"Reminder for {self.email} - {self.reminder_date}"
+
+    class Meta:
+        ordering = ("-reminder_date",)
