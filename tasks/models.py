@@ -25,13 +25,29 @@ class TaskCategory(models.Model):
         verbose_name_plural = "Task Categories"
 
 
+class PendingWith(models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = "Task Pending With"
+        verbose_name_plural = "Task Pending With"
+
+
+class Priority(models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = "Priority"
+        verbose_name_plural = "Priorities"
+
+
 class Task(models.Model):
-    PRIORITY = [
-        ("critical", "Critical"),
-        ("high", "High"),
-        ("medium", "Medium"),
-        ("low", "Low"),
-    ]
     STATUS = [
         ("not_started", "Not Started"),
         ("in_progress", "In Progress"),
@@ -42,11 +58,18 @@ class Task(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     status = models.CharField(max_length=27, choices=STATUS, default="not_started")
-    priority = models.CharField(max_length=27, choices=PRIORITY)
-    pending_with = models.CharField(
-        max_length=225,
+    priority = models.ForeignKey(
+        Priority,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
+    )
+    pending_with = models.ForeignKey(
+        PendingWith,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tasks",
     )
     brand = models.ForeignKey(
         Brand,

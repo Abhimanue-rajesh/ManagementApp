@@ -114,7 +114,7 @@
                         required
                         class="w-full rounded border border-base-200 bg-white px-3 py-2 text-sm dark:border-base-700 dark:bg-base-900">
                     <option value="">---------</option>
-                    {% for value, label in task_priorities %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+                    {% for priority in task_priorities %}<option value="{{ priority.id }}">{{ priority.name }}</option>{% endfor %}
                 </select>
             </div>
             <!-- Status -->

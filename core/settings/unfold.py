@@ -37,7 +37,7 @@ UNFOLD = {
                     },
                     {
                         "title": "Tasks",
-                        "icon": "today",
+                        "icon": "task_alt",
                         "link": reverse_lazy("admin:tasks_task_changelist"),
                     },
                     {
@@ -64,6 +64,16 @@ UNFOLD = {
                         "permission": lambda request: request.user.has_perm(
                             "tasks.view_brand"
                         ),
+                    },
+                    {
+                        "title": "Priorities",
+                        "icon": "priority_high",
+                        "link": reverse_lazy("admin:tasks_priority_changelist"),
+                    },
+                    {
+                        "title": "Pending With",
+                        "icon": "hourglass_top",
+                        "link": reverse_lazy("admin:tasks_pendingwith_changelist"),
                     },
                 ],
             },

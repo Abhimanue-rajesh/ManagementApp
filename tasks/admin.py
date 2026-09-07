@@ -7,6 +7,8 @@ from unfold.decorators import display
 
 from tasks.models import (
     Brand,
+    PendingWith,
+    Priority,
     Task,
     TaskActionStep,
     TaskActivity,
@@ -35,27 +37,32 @@ class TaskActivityAdmin(StackedInline):
 @admin.register(Task)
 class TaskAdmin(ModelAdmin):
     change_list_template = "tasks/change_list.html"
-    change_form_template = "tasks/task_change_form.html"
+
     list_display = (
         "title",
-        "priority",
+        "priority_badge",
         "status",
         "last_activity_date_display",
         "due_date",
         "pending_with",
     )
+
     list_filter = (
         "status",
         "priority",
         "category",
         "due_date",
     )
+
     search_fields = (
         "title",
         "description",
     )
+
     list_editable = ("status",)
+
     autocomplete_fields = ("category",)
+
     readonly_fields = (
         "created_at",
         "updated_date",
@@ -64,10 +71,12 @@ class TaskAdmin(ModelAdmin):
         "is_overdue",
         "deadline",
     )
+
     inlines = [
         TaskActivityAdmin,
         TaskActionStepInline,
     ]
+
     ordering = ("-created_at",)
 
     fieldsets = (
@@ -107,14 +116,17 @@ class TaskAdmin(ModelAdmin):
     @display(
         description="Priority",
         label={
-            "critical": "danger",
-            "high": "warning",
-            "medium": "info",
-            "low": "success",
+            "Critical": "danger",
+            "High": "warning",
+            "Medium": "info",
+            "Low": "success",
         },
     )
     def priority_badge(self, obj):
-        return obj.priority
+        if not obj.priority:
+            return "-"
+
+        return obj.priority.name
 
     @admin.display(description="Last Activity")
     def last_activity_display(self, obj):
@@ -130,15 +142,14 @@ class TaskAdmin(ModelAdmin):
         return obj.last_activity_date() or "-"
 
     def changelist_view(self, request, extra_context=None):
-
         if request.method == "POST" and request.POST.get("_quick_add_task") == "1":
             title = request.POST.get("title")
-            priority = request.POST.get("priority")
+            priority_id = request.POST.get("priority")
             due_date = request.POST.get("due_date") or localdate()
             status = request.POST.get("status") or "not_started"
             category_id = request.POST.get("category")
 
-            if not title or not priority or not due_date:
+            if not title or not priority_id or not due_date:
                 messages.error(
                     request,
                     "Please fill all required fields.",
@@ -147,7 +158,7 @@ class TaskAdmin(ModelAdmin):
 
             task = Task(
                 title=title,
-                priority=priority,
+                priority_id=priority_id,
                 due_date=due_date,
                 status=status,
             )
@@ -169,7 +180,7 @@ class TaskAdmin(ModelAdmin):
         extra_context.update(
             {
                 "task_categories": TaskCategory.objects.all(),
-                "task_priorities": Task.PRIORITY,
+                "task_priorities": Priority.objects.all(),
                 "task_statuses": Task.STATUS,
                 "today": localdate(),
             }
@@ -195,6 +206,24 @@ User = get_user_model()
 
 @admin.register(Brand)
 class BrandAdmin(ModelAdmin):
+    list_display = ("name",)
+    search_fields = ("name",)
+
+    class Media:
+        js = ("js/admin_row_click.js",)
+
+
+@admin.register(Priority)
+class PriorityAdmin(ModelAdmin):
+    list_display = ("name",)
+    search_fields = ("name",)
+
+    class Media:
+        js = ("js/admin_row_click.js",)
+
+
+@admin.register(PendingWith)
+class PendingWithAdmin(ModelAdmin):
     list_display = ("name",)
     search_fields = ("name",)
 
