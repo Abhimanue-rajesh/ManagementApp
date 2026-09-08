@@ -255,6 +255,11 @@ UNFOLD = {
                         "icon": "schedule",
                         "link": reverse_lazy("time_checker"),
                     },
+                    {
+                        "title": "Currency Converter",
+                        "icon": "payments",
+                        "link": reverse_lazy("currency_converter"),
+                    },
                 ],
             },
             {

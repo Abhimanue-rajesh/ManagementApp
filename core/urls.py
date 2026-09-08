@@ -4,7 +4,7 @@ from django.urls import include, path, re_path
 from django.views.static import serve
 
 from dashboard.admin import group_members_dashboard
-from dashboard.views import time_checker
+from dashboard.views import currency_converter, time_checker
 
 urlpatterns = [
     re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}),
@@ -19,6 +19,11 @@ urlpatterns = [
         "admin/time-checker/",
         admin.site.admin_view(time_checker),
         name="time_checker",
+    ),
+    path(
+        "admin/currency-converter/",
+        admin.site.admin_view(currency_converter),
+        name="currency_converter",
     ),
     path(
         "", admin.site.urls

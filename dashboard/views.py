@@ -238,3 +238,16 @@ def time_checker(request):
         "dashboard/time_checker.html",
         context,
     )
+
+
+def currency_converter(request):
+    context = {
+        **admin.site.each_context(request),
+        "title": "Currency Converter",
+    }
+
+    return render(
+        request,
+        "dashboard/currency_converter.html",
+        context,
+    )

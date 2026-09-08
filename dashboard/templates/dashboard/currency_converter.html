@@ -1,0 +1,133 @@
+{% extends "admin/base.html" %}
+{% load admin_urls i18n unfold static %}
+{% block title %}
+    {% if subtitle %}{{ subtitle }} |{% endif %}
+    {{ title }} | {{ site_title|default:_("Django site admin") }}
+{% endblock title %}
+{% block branding %}
+    {% include "unfold/helpers/site_branding.html" %}
+{% endblock branding %}
+{% block extrahead %}
+    {{ block.super }}
+    <script src="{% static 'js/currency_converter.js' %}" defer></script>
+{% endblock extrahead %}
+{% block content %}
+    <div class="flex flex-col gap-6">
+        <!-- Header -->
+        <div>
+            <h1 class="text-xl font-semibold text-font-important-light dark:text-font-important-dark">Currency Converter</h1>
+            <p class="mt-1 text-sm text-font-subtle-light dark:text-font-subtle-dark">
+                Convert currencies using the latest available exchange rates.
+            </p>
+        </div>
+        <!-- Converter Card -->
+        <div class="rounded-default border border-base-200 p-6 shadow-xs dark:border-base-800 dark:bg-base-900">
+            <div class="mb-5">
+                <h2 class="text-base font-semibold text-font-important-light dark:text-font-important-dark">Convert Currency</h2>
+                <p class="mt-1 text-sm text-font-subtle-light dark:text-font-subtle-dark">
+                    Enter an amount and select the currencies.
+                </p>
+            </div>
+            <div class="grid grid-cols-1 gap-6 xl:grid-cols-3">
+                <!-- Amount -->
+                <div>
+                    <label for="currency-amount"
+                           class="mb-2 block text-sm font-medium text-font-important-light dark:text-font-important-dark">
+                        Amount
+                    </label>
+                    <div class="relative">
+                        <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-base-400">
+                            payments
+                        </span>
+                        <input type="number"
+                               id="currency-amount"
+                               value="1"
+                               min="0"
+                               step="0.01"
+                               class="w-full rounded-default border border-base-200 bg-white py-2.5 pl-10 pr-3 text-sm text-font-default-light outline-none transition focus:border-primary-600 focus:ring-1 focus:ring-primary-600 dark:border-base-700 dark:bg-base-900 dark:text-font-default-dark">
+                    </div>
+                </div>
+                <!-- From -->
+                <div>
+                    <label for="currency-from"
+                           class="mb-2 block text-sm font-medium text-font-important-light dark:text-font-important-dark">
+                        From
+                    </label>
+                    <div class="relative">
+                        <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-base-400">
+                            account_balance
+                        </span>
+                        <select id="currency-from"
+                                class="w-full appearance-none rounded-default border border-base-200 bg-white py-2.5 pl-10 pr-8 text-sm text-font-default-light outline-none transition focus:border-primary-600 focus:ring-1 focus:ring-primary-600 dark:border-base-700 dark:bg-base-900 dark:text-font-default-dark">
+                            <option value="AED" selected>AED — UAE Dirham</option>
+                            <option value="USD">USD — US Dollar</option>
+                            <option value="EUR">EUR — Euro</option>
+                            <option value="GBP">GBP — British Pound</option>
+                            <option value="INR">INR — Indian Rupee</option>
+                            <option value="SAR">SAR — Saudi Riyal</option>
+                            <option value="QAR">QAR — Qatari Riyal</option>
+                            <option value="OMR">OMR — Omani Rial</option>
+                        </select>
+                        <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-base-400">
+                            expand_more
+                        </span>
+                    </div>
+                </div>
+                <!-- To -->
+                <div>
+                    <label for="currency-to"
+                           class="mb-2 block text-sm font-medium text-font-important-light dark:text-font-important-dark">
+                        To
+                    </label>
+                    <div class="relative">
+                        <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-base-400">
+                            currency_exchange
+                        </span>
+                        <select id="currency-to"
+                                class="w-full appearance-none rounded-default border border-base-200 bg-white py-2.5 pl-10 pr-8 text-sm text-font-default-light outline-none transition focus:border-primary-600 focus:ring-1 focus:ring-primary-600 dark:border-base-700 dark:bg-base-900 dark:text-font-default-dark">
+                            <option value="AED">AED — UAE Dirham</option>
+                            <option value="USD">USD — US Dollar</option>
+                            <option value="EUR">EUR — Euro</option>
+                            <option value="GBP">GBP — British Pound</option>
+                            <option value="INR" selected>INR — Indian Rupee</option>
+                            <option value="SAR">SAR — Saudi Riyal</option>
+                            <option value="QAR">QAR — Qatari Riyal</option>
+                            <option value="OMR">OMR — Omani Rial</option>
+                        </select>
+                        <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-base-400">
+                            expand_more
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <!-- Swap -->
+            <div class="mt-5">
+                <button id="swap-currencies"
+                        type="button"
+                        class="inline-flex items-center gap-2 rounded-default border border-base-200 px-4 py-2 text-sm font-medium text-font-default-light transition hover:bg-base-50 dark:border-base-700 dark:text-font-default-dark dark:hover:bg-base-800">
+                    <span class="material-symbols-outlined text-lg">swap_horiz</span>
+                    Swap Currencies
+                </button>
+            </div>
+        </div>
+        <!-- Result -->
+        <div id="currency-result-card"
+             class="rounded-default border border-base-200 p-6 shadow-xs dark:border-base-800 dark:bg-base-900">
+            <p class="text-sm text-font-subtle-light dark:text-font-subtle-dark">Converted Amount</p>
+            <div class="mt-2 flex items-baseline gap-3">
+                <span id="converted-amount"
+                      class="text-3xl font-semibold text-font-important-light dark:text-font-important-dark">—</span>
+                <span id="converted-currency"
+                      class="text-lg text-font-subtle-light dark:text-font-subtle-dark"></span>
+            </div>
+            <div class="mt-4 border-t border-base-200 pt-4 dark:border-base-800">
+                <p id="exchange-rate"
+                   class="text-sm text-font-default-light dark:text-font-default-dark">
+                    Select currencies to view the exchange rate.
+                </p>
+                <p id="rate-date"
+                   class="mt-1 text-xs text-font-subtle-light dark:text-font-subtle-dark"></p>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
