@@ -5,6 +5,11 @@ from django.utils import timezone
 
 class PaymentCard(models.Model):
     name = models.CharField(max_length=150, unique=True)
+    balance = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+    )
 
     class Meta:
         ordering = ["name"]
@@ -104,6 +109,12 @@ class SubscriptionTracker(models.Model):
         blank=True,
     )
 
+    last_debit_processed_date = models.DateField(
+        null=True,
+        blank=True,
+        editable=False,
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -127,3 +138,51 @@ class SubscriptionTracker(models.Model):
     def is_overdue(self):
         days = self.days_until_debit()
         return days is not None and days < 0
+
+
+class CardTransaction(models.Model):
+    TRANSACTION_TYPES = [
+        ("credit", "Credit"),
+        ("debit", "Debit"),
+    ]
+
+    card = models.ForeignKey(
+        PaymentCard,
+        on_delete=models.CASCADE,
+        related_name="transactions",
+    )
+
+    transaction_type = models.CharField(
+        max_length=10,
+        choices=TRANSACTION_TYPES,
+        default="debit",
+    )
+
+    amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+    )
+
+    subscription = models.ForeignKey(
+        SubscriptionTracker,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="card_transactions",
+    )
+
+    transaction_date = models.DateField(
+        default=timezone.localdate,
+    )
+
+    notes = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-transaction_date", "-created_at"]
+        verbose_name = "Card Transaction"
+        verbose_name_plural = "Card Transactions"
+
+    def __str__(self):
+        return f"{self.card} - {self.transaction_type} - {self.amount}"

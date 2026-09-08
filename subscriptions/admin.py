@@ -3,17 +3,12 @@ from unfold.admin import ModelAdmin
 from unfold.decorators import display
 
 from .models import (
+    CardTransaction,
     Currency,
     PaymentCard,
     PaymentTiming,
     SubscriptionTracker,
 )
-
-
-@admin.register(PaymentCard)
-class PaymentCardAdmin(ModelAdmin):
-    list_display = ("name",)
-    search_fields = ("name",)
 
 
 @admin.register(Currency)
@@ -139,3 +134,74 @@ class SubscriptionTrackerAdmin(ModelAdmin):
 
     class Media:
         js = ("js/admin_row_click.js",)
+
+
+@admin.register(CardTransaction)
+class CardTransactionAdmin(ModelAdmin):
+    list_display = (
+        "transaction_date",
+        "card",
+        "transaction_type",
+        "amount",
+        "subscription",
+    )
+
+    list_filter = (
+        "transaction_type",
+        "card",
+        "transaction_date",
+    )
+
+    search_fields = (
+        "card__name",
+        "subscription__platform",
+        "notes",
+    )
+
+    autocomplete_fields = (
+        "card",
+        "subscription",
+    )
+
+    ordering = (
+        "-transaction_date",
+        "-created_at",
+    )
+
+
+class CardTransactionInline(admin.TabularInline):
+    model = CardTransaction
+    extra = 0
+    template = "subscriptions/cardtransaction/tabular.html"
+
+    fields = (
+        "transaction_date",
+        "transaction_type",
+        "amount",
+        "subscription",
+        "notes",
+    )
+
+    readonly_fields = (
+        "transaction_date",
+        "transaction_type",
+        "amount",
+        "subscription",
+        "notes",
+    )
+
+    can_delete = False
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(PaymentCard)
+class PaymentCardAdmin(ModelAdmin):
+    list_display = (
+        "name",
+        "balance",
+    )
+
+    search_fields = ("name",)
+    inlines = (CardTransactionInline,)

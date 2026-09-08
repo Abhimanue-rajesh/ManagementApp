@@ -1,0 +1,35 @@
+<div id="{{ inline_admin_formset.formset.prefix }}-group"
+     data-inline-type="tabular"
+     {% if inline_admin_formset.opts.tab %} x-show="activeTab == '{{ inline_admin_formset.formset.prefix|slugify }}'" {% else %} x-show="activeTab == 'general'" {% endif %}>
+    <div class="tabular inline-related {% if forloop.last %}last-related{% endif %}">
+        <fieldset class="module relative {{ inline_admin_formset.classes }} min-w-0"
+                  aria-labelledby="{{ inline_admin_formset.formset.prefix }}-heading">
+            {% if inline_admin_formset.is_collapsible %}
+                <details>
+                    <summary class="*:mb-0">
+                    {% endif %}
+                    <div class="flex items-center justify-between rounded-default px-3 py-2">
+                        <h2 id="{{ inline_admin_formset.formset.prefix }}-heading"
+                            class="font-semibold text-font-important-light dark:text-font-important-dark">
+                            {{ inline_admin_formset.opts.verbose_name_plural|capfirst }}
+                        </h2>
+                        {% if inline_admin_formset.formset.instance.pk %}
+                            <a href="{% url 'admin:subscriptions_cardtransaction_add' %}?card={{ inline_admin_formset.formset.instance.pk }}"
+                               class="flex items-center gap-2 rounded-default bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700">
+                                <span class="material-symbols-outlined text-base">add</span>
+                                Add a Transaction
+                            </a>
+                        {% endif %}
+                    </div>
+                    {% if inline_admin_formset.is_collapsible %}</summary>{% endif %}
+                {% if inline_admin_formset.opts.template_before %}
+                    {% include inline_admin_formset.opts.template_before %}
+                {% endif %}
+                {% include "unfold/helpers/edit_inline/tabular_table.html" %}
+                {% if inline_admin_formset.opts.template_after %}
+                    {% include inline_admin_formset.opts.template_after %}
+                {% endif %}
+                {% if inline_admin_formset.is_collapsible %}</details>{% endif %}
+        </fieldset>
+    </div>
+</div>

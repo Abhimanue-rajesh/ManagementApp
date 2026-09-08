@@ -141,6 +141,13 @@ UNFOLD = {
                         ),
                     },
                     {
+                        "title": "Card Transactions",
+                        "icon": "receipt_long",
+                        "link": reverse_lazy(
+                            "admin:subscriptions_cardtransaction_changelist"
+                        ),
+                    },
+                    {
                         "title": "Currencies",
                         "icon": "currency_exchange",
                         "link": reverse_lazy("admin:subscriptions_currency_changelist"),
