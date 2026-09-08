@@ -58,6 +58,11 @@ UNFOLD = {
                 "separator": True,
                 "items": [
                     {
+                        "title": "Mails",
+                        "icon": "mail",
+                        "link": reverse_lazy("admin:tasks_taskemail_changelist"),
+                    },
+                    {
                         "title": "Brands",
                         "icon": "sell",
                         "link": reverse_lazy("admin:tasks_brand_changelist"),
@@ -71,16 +76,14 @@ UNFOLD = {
                         "link": reverse_lazy("admin:tasks_priority_changelist"),
                     },
                     {
+                        "title": "Categories",
+                        "icon": "category",
+                        "link": reverse_lazy("admin:tasks_taskcategory_changelist"),
+                    },
+                    {
                         "title": "Pending With",
                         "icon": "hourglass_top",
                         "link": reverse_lazy("admin:tasks_pendingwith_changelist"),
-                    },
-                    {
-                        "title": "Email Reminders",
-                        "icon": "notifications_active",
-                        "link": reverse_lazy(
-                            "admin:tasks_taskemailreminder_changelist"
-                        ),
                     },
                 ],
             },

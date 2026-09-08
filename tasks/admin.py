@@ -10,25 +10,10 @@ from tasks.models import (
     PendingWith,
     Priority,
     Task,
-    TaskActionStep,
     TaskActivity,
     TaskCategory,
     TaskEmail,
-    TaskEmailReminder,
 )
-
-
-class TaskActionStepInline(StackedInline):
-    model = TaskActionStep
-    extra = 0
-    fields = (
-        "order",
-        "title",
-        "status",
-        "due_date",
-        "started_at",
-        "completed_at",
-    )
 
 
 class TaskActivityAdmin(StackedInline):
@@ -88,11 +73,13 @@ class TaskAdmin(ModelAdmin):
 
     inlines = [
         TaskActivityAdmin,
-        TaskActionStepInline,
         TaskEmailInline,
     ]
 
-    # ordering = ("-created_at",)
+    ordering = (
+        "priority__sort_order",
+        "due_date",
+    )
 
     fieldsets = (
         (
@@ -246,51 +233,24 @@ class PendingWithAdmin(ModelAdmin):
         js = ("js/admin_row_click.js",)
 
 
-class TaskEmailReminderInline(TabularInline):
-    model = TaskEmailReminder
-    extra = 0
-
-    fields = (
-        "reminder_date",
-        "note",
-        "sent",
-        "sent_at",
-    )
-
-    readonly_fields = ("sent_at",)
-
-    # ordering = ("-reminder_date",)
-
-    show_change_link = True
-
-
 @admin.register(TaskEmail)
 class TaskEmailAdmin(ModelAdmin):
     list_display = (
         "subject",
         "task",
         "sent_at",
-        "reminder_count",
     )
 
     list_filter = ("sent_at",)
 
     search_fields = (
         "subject",
-        "sender",
-        "recipients",
         "task__title",
     )
 
     autocomplete_fields = ("task",)
 
-    # readonly_fields = ("created_at",)
-
-    # ordering = ("-sent_at",)
-
-    inlines = [
-        TaskEmailReminderInline,
-    ]
+    ordering = ("-sent_at",)
 
     fieldsets = (
         (
@@ -299,15 +259,13 @@ class TaskEmailAdmin(ModelAdmin):
                 "fields": (
                     "task",
                     "subject",
-                    "sender",
-                    "recipients",
                 ),
             },
         ),
         (
             "Dates",
             {
-                "fields": (("sent_at", "received_at"),),
+                "fields": (("sent_at",),),
             },
         ),
     )
@@ -315,74 +273,3 @@ class TaskEmailAdmin(ModelAdmin):
     @admin.display(description="Reminders")
     def reminder_count(self, obj):
         return obj.reminders.count()
-
-
-@admin.register(TaskEmailReminder)
-class TaskEmailReminderAdmin(ModelAdmin):
-    list_display = (
-        "email",
-        "task_display",
-        "reminder_date",
-        "sent_badge",
-        "sent_at",
-    )
-
-    list_filter = (
-        "sent",
-        "reminder_date",
-        "sent_at",
-    )
-
-    search_fields = (
-        "email__subject",
-        "email__sender",
-        "email__recipients",
-        "email__task__title",
-        "note",
-    )
-
-    autocomplete_fields = ("email",)
-
-    readonly_fields = ("created_at",)
-
-    # ordering = (
-    #     "sent",
-    #     "reminder_date",
-    # )
-
-    fieldsets = (
-        (
-            "Reminder Details",
-            {
-                "fields": (
-                    "email",
-                    "reminder_date",
-                    "note",
-                    "sent",
-                ),
-            },
-        ),
-        (
-            "Dates",
-            {
-                "fields": (
-                    "sent_at",
-                    "created_at",
-                ),
-            },
-        ),
-    )
-
-    @admin.display(description="Task")
-    def task_display(self, obj):
-        return obj.email.task
-
-    @display(
-        description="Status",
-        label={
-            True: "success",
-            False: "warning",
-        },
-    )
-    def sent_badge(self, obj):
-        return obj.sent

@@ -38,11 +38,13 @@ class PendingWith(models.Model):
 
 class Priority(models.Model):
     name = models.CharField(max_length=100)
+    sort_order = models.PositiveSmallIntegerField(default=0)
 
     def __str__(self):
         return self.name
 
     class Meta:
+        ordering = ("sort_order",)
         verbose_name = "Priority"
         verbose_name_plural = "Priorities"
 
@@ -160,44 +162,6 @@ class Task(models.Model):
         return days is not None and days > 2
 
 
-class TaskActionStep(models.Model):
-    STATUS = [
-        ("pending", "Pending"),
-        ("in_progress", "In Progress"),
-        ("blocked", "Blocked"),
-        ("completed", "Completed"),
-    ]
-    task = models.ForeignKey(
-        Task,
-        on_delete=models.CASCADE,
-        related_name="action_steps",
-    )
-    title = models.CharField(max_length=200)
-    details = models.TextField(blank=True)
-    order = models.PositiveIntegerField(default=0)
-    status = models.CharField(
-        max_length=20,
-        choices=STATUS,
-        default="pending",
-    )
-    assigned_to = models.CharField(max_length=200)
-    due_date = models.DateField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    started_at = models.DateField(null=True, blank=True)
-    completed_at = models.DateField(null=True, blank=True)
-
-    class Meta:
-        ordering = ["order", "due_date", "id"]
-
-    def __str__(self):
-        return f"{self.task.title} - {self.title}"
-
-    def mark_completed(self):
-        self.status = "completed"
-        self.completed_at = timezone.now()
-        self.save()
-
-
 class TaskActivity(models.Model):
     task = models.ForeignKey(
         Task,
@@ -234,31 +198,3 @@ class TaskEmail(models.Model):
 
     def __str__(self):
         return self.subject or f"Email #{self.pk}"
-
-
-class TaskEmailReminder(models.Model):
-    email = models.ForeignKey(
-        TaskEmail,
-        on_delete=models.CASCADE,
-        related_name="reminders",
-    )
-    reminder_date = models.DateTimeField()
-    note = models.TextField(
-        blank=True,
-    )
-    sent = models.BooleanField(
-        default=False,
-    )
-    sent_at = models.DateTimeField(
-        null=True,
-        blank=True,
-    )
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-    )
-
-    def __str__(self):
-        return f"Reminder for {self.email} - {self.reminder_date}"
-
-    class Meta:
-        ordering = ("-reminder_date",)
