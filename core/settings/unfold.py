@@ -93,6 +93,11 @@ UNFOLD = {
                 "separator": True,
                 "items": [
                     {
+                        "title": "Email Extractor",
+                        "icon": "alternate_email",
+                        "link": reverse_lazy("email_extractor"),
+                    },
+                    {
                         "title": "Ticket History",
                         "icon": "history",
                         "link": reverse_lazy(

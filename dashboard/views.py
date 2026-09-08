@@ -251,3 +251,16 @@ def currency_converter(request):
         "dashboard/currency_converter.html",
         context,
     )
+
+
+def email_extractor(request):
+    context = {
+        **admin.site.each_context(request),
+        "title": "Email Extractor",
+    }
+
+    return render(
+        request,
+        "dashboard/email_extractor.html",
+        context,
+    )
