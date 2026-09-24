@@ -1,11 +1,11 @@
 from .base import *  # noqa: F401, F403
 
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = [
     "localhost",
     "13.232.79.134",
-    "deepsea.pulsencode.com",
+    "task.thedeepseafood.com",
 ]  # Example - Need to Replace with the server IP - Do not remove localhost
 
 # Database
