@@ -6,12 +6,15 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('tasks', '0001_initial'),
+        ("tasks", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='taskcategory',
-            options={'verbose_name': 'Task Category', 'verbose_name_plural': 'Task Categories'},
+            name="taskcategory",
+            options={
+                "verbose_name": "Task Category",
+                "verbose_name_plural": "Task Categories",
+            },
         ),
     ]

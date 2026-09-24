@@ -5,7 +5,7 @@ DEBUG = False
 ALLOWED_HOSTS = [
     "localhost",
     "13.232.79.134",
-    "deepsea.pulsencode.com"
+    "deepsea.pulsencode.com",
 ]  # Example - Need to Replace with the server IP - Do not remove localhost
 
 # Database

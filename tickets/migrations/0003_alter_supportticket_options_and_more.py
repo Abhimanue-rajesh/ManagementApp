@@ -6,20 +6,27 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('tickets', '0002_rename_completion_status_supportticket_status'),
+        ("tickets", "0002_rename_completion_status_supportticket_status"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='supportticket',
-            options={'ordering': ['-last_updated_date', '-ticket_number'], 'verbose_name_plural': 'Support Tickets'},
+            name="supportticket",
+            options={
+                "ordering": ["-last_updated_date", "-ticket_number"],
+                "verbose_name_plural": "Support Tickets",
+            },
         ),
         migrations.AlterModelOptions(
-            name='ticketrouting',
-            options={'ordering': ['name'], 'verbose_name_plural': 'Ticket Routings'},
+            name="ticketrouting",
+            options={"ordering": ["name"], "verbose_name_plural": "Ticket Routings"},
         ),
         migrations.AlterModelOptions(
-            name='ticketstatus',
-            options={'ordering': ['name'], 'verbose_name': 'Ticket Status', 'verbose_name_plural': 'Ticket Statuses'},
+            name="ticketstatus",
+            options={
+                "ordering": ["name"],
+                "verbose_name": "Ticket Status",
+                "verbose_name_plural": "Ticket Statuses",
+            },
         ),
     ]

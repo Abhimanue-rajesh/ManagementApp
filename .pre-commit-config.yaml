@@ -23,3 +23,12 @@ repos:
     rev: 9.0.0a3
     hooks:
       - id: isort
+
+  - repo: local
+    hooks:
+      - id: django-tests
+        name: Django tests
+        entry: python manage.py test
+        language: system
+        pass_filenames: false
+        always_run: true
