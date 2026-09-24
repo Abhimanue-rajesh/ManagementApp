@@ -198,3 +198,34 @@ class TaskEmail(models.Model):
 
     def __str__(self):
         return self.subject or f"Email #{self.pk}"
+
+
+class ShortTaskReminder(models.Model):
+    title = models.CharField(max_length=255)
+    is_done = models.BooleanField(default=False)
+    completed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        editable=False,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("is_done", "-created_at")
+        verbose_name = "Short Task Reminder"
+        verbose_name_plural = "Short Task Reminders"
+
+    def __str__(self):
+        return self.title
+
+    def save(self, *args, **kwargs):
+        if self.is_done and self.completed_at is None:
+            self.completed_at = timezone.now()
+        elif not self.is_done:
+            self.completed_at = None
+
+        # Also save the completion time if save(update_fields=...) is used.
+        if kwargs.get("update_fields") is not None:
+            kwargs["update_fields"] = set(kwargs["update_fields"]) | {"completed_at"}
+
+        super().save(*args, **kwargs)

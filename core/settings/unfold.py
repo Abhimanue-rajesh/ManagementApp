@@ -41,6 +41,13 @@ UNFOLD = {
                         "link": reverse_lazy("admin:tasks_task_changelist"),
                     },
                     {
+                        "title": "Short Tasks",
+                        "icon": "checklist",
+                        "link": reverse_lazy(
+                            "admin:tasks_shorttaskreminder_changelist"
+                        ),
+                    },
+                    {
                         "title": "Subscriptions",
                         "icon": "subscriptions",
                         "link": reverse_lazy(

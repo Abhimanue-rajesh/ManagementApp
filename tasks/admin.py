@@ -1,5 +1,6 @@
 from django.contrib import admin, messages
 from django.contrib.auth import get_user_model
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.shortcuts import redirect
 from django.utils.timezone import localdate
 from unfold.admin import ModelAdmin, TabularInline
@@ -9,6 +10,7 @@ from tasks.models import (
     Brand,
     PendingWith,
     Priority,
+    ShortTaskReminder,
     Task,
     TaskActivity,
     TaskCategory,
@@ -310,3 +312,52 @@ class TaskEmailAdmin(ModelAdmin):
     @admin.display(description="Reminders")
     def reminder_count(self, obj):
         return obj.reminders.count()
+
+
+@admin.register(ShortTaskReminder)
+class ShortTaskReminderAdmin(ModelAdmin):
+    change_list_template = "tasks/short_task_reminder/change_list.html"
+
+    list_display = ("title", "is_done", "completed_at", "created_at")
+    list_editable = ("is_done",)
+    list_filter = ("is_done", "created_at")
+    search_fields = ("title",)
+    readonly_fields = ("completed_at", "created_at")
+    ordering = ("is_done", "-created_at")
+    list_per_page = 25
+
+    fieldsets = (
+        ("Task", {"fields": ("title", "is_done")}),
+        ("Dates", {"fields": ("completed_at", "created_at")}),
+    )
+
+    def changelist_view(self, request, extra_context=None):
+        if (
+            request.method == "POST"
+            and request.POST.get("_quick_add_short_task") == "1"
+        ):
+            if not self.has_add_permission(request):
+                raise PermissionDenied
+
+            reminder = ShortTaskReminder(
+                title=request.POST.get("title", "").strip(),
+            )
+
+            try:
+                reminder.full_clean()
+            except ValidationError as exc:
+                for error in exc.messages:
+                    messages.error(request, error)
+            else:
+                reminder.save()
+                messages.success(request, "Short task added successfully.")
+
+            return redirect(request.get_full_path())
+
+        extra_context = extra_context or {}
+        extra_context["can_quick_add"] = self.has_add_permission(request)
+
+        return super().changelist_view(request, extra_context=extra_context)
+
+    class Media:
+        js = ("js/admin_row_click.js",)
