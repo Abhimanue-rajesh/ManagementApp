@@ -51,6 +51,26 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="ml-auto pl-4">
+                            <a href="{% url 'admin:notifications_notification_changelist' %}"
+                               title="Notifications"
+                               aria-label="Open notifications"
+                               class="relative inline-flex h-10 w-10 items-center justify-center rounded-full text-font-default-light hover:bg-base-100 dark:text-font-default-dark dark:hover:bg-base-800">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                     fill="none"
+                                     viewBox="0 0 24 24"
+                                     stroke-width="1.8"
+                                     stroke="currentColor"
+                                     class="h-6 w-6"
+                                     aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-.605A8.967 8.967 0 0 1 18 10.5V9a6 6 0 0 0-12 0v1.5a8.967 8.967 0 0 1-2.311 5.977 23.85 23.85 0 0 0 5.454.605m5.714 0a3 3 0 0 1-5.714 0" />
+                                </svg>
+                                {% if has_unread_notifications %}
+                                    <span class="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500"
+                                          aria-label="Unread notifications"></span>
+                                {% endif %}
+                            </a>
+                        </div>
                     {% endif %}
                 {% endblock usertools %}
             </div>

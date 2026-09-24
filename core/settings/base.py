@@ -40,6 +40,7 @@ EXTERNAL_APPS = [
     "quickcopy.apps.QuickcopyConfig",
     "subscriptions.apps.SubscriptionsConfig",
     "accounts.apps.AccountsConfig",
+    "notifications.apps.NotificationsConfig",
 ]
 
 INSTALLED_APPS += EXTERNAL_APPS
@@ -68,6 +69,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "notifications.context_processors.notification_status",
             ],
         },
     },
