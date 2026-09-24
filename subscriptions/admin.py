@@ -1,14 +1,15 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin
-from unfold.decorators import display
+from unfold.decorators import action, display
 
-from .models import (
+from subscriptions.models import (
     CardTransaction,
     Currency,
     PaymentCard,
     PaymentTiming,
     SubscriptionTracker,
 )
+from subscriptions.reports import export_subscription_report_pdf
 
 
 @admin.register(Currency)
@@ -69,6 +70,7 @@ class SubscriptionTrackerAdmin(ModelAdmin):
         "is_due_soon",
         "is_overdue",
     )
+    actions_list = ["export_report"]
 
     ordering = ("status", "debit_date")
 
@@ -115,7 +117,7 @@ class SubscriptionTrackerAdmin(ModelAdmin):
     )
 
     @display(
-        description="Status",
+        description="Export Subscription Report",
         label={
             "active": "success",
             "inactive": "danger",
@@ -123,6 +125,18 @@ class SubscriptionTrackerAdmin(ModelAdmin):
             "cancelled": "danger",
         },
     )
+    @action(
+        description="Export Report",
+        icon="download",
+        url_path="export-report",
+        permissions=["export_report"],
+    )
+    def export_report(self, request):
+        return export_subscription_report_pdf()
+
+    def has_export_report_permission(self, request):
+        return self.has_view_permission(request)
+
     def status_badge(self, obj):
         return obj.status
 
