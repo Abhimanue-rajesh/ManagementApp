@@ -193,6 +193,22 @@ class TaskAdmin(ModelAdmin):
             extra_context=extra_context,
         )
 
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+
+        changelist_url_name = f"{self.opts.app_label}_{self.opts.model_name}_changelist"
+
+        is_task_list = (
+            request.resolver_match
+            and request.resolver_match.url_name == changelist_url_name
+        )
+        is_searching = bool(request.GET.get("q", "").strip())
+
+        if is_task_list and not is_searching:
+            return queryset.exclude(status="closed")
+
+        return queryset
+
 
 @admin.register(TaskCategory)
 class TaskCategoryAdmin(ModelAdmin):
