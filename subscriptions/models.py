@@ -55,7 +55,6 @@ class SubscriptionTracker(models.Model):
 
     platform = models.CharField(
         max_length=150,
-        default="No Platform",
     )
 
     status = models.CharField(

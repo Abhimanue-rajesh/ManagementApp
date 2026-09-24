@@ -32,7 +32,11 @@ class TaskActivityAdmin(TabularInline):
             formfield.widget.attrs.update(
                 {
                     "rows": 3,
-                    "style": "height: 4.5rem; min-height: 4.5rem; resize: vertical;",
+                    "style": (
+                        "width: 100%; max-width: none; "
+                        "height: 4.5rem; min-height: 4.5rem; "
+                        "resize: vertical;"
+                    ),
                 }
             )
 
@@ -47,6 +51,7 @@ class TaskEmailInline(TabularInline):
         "subject",
         "sent_at",
     )
+    readonly_fields = ("sent_at",)
 
     show_change_link = True
 
@@ -137,6 +142,23 @@ class TaskAdmin(ModelAdmin):
             "js/task_autosave.js",
             "js/admin_row_click.js",
         )
+
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
+
+        if db_field.name == "description" and formfield:
+            formfield.widget.attrs.update(
+                {
+                    "rows": 3,
+                    "style": (
+                        "width: 100%; max-width: none; "
+                        "height: 5.5rem; min-height: 4.5rem; "
+                        "resize: vertical;"
+                    ),
+                }
+            )
+
+        return formfield
 
     @display(
         description="Priority",

@@ -79,11 +79,18 @@ class SubscriptionTrackerAdmin(ModelAdmin):
             "Subscription Details",
             {
                 "fields": (
-                    "platform",
-                    "status",
-                    "email_used",
-                    "card_used",
-                    "used_for",
+                    (
+                        "platform",
+                        "status",
+                    ),
+                    (
+                        "email_used",
+                        "card_used",
+                    ),
+                    (
+                        "used_for",
+                        "notes",
+                    ),
                 )
             },
         ),
@@ -91,30 +98,51 @@ class SubscriptionTrackerAdmin(ModelAdmin):
             "Payment Details",
             {
                 "fields": (
-                    "currency",
-                    "pricing",
-                    "payment_timing",
-                    "debit_date",
+                    (
+                        "currency",
+                        "pricing",
+                    ),
+                    (
+                        "payment_timing",
+                        "debit_date",
+                    ),
                 )
             },
-        ),
-        (
-            "Notes",
-            {"fields": ("notes",)},
         ),
         (
             "System Info",
             {
                 "fields": (
-                    "created_at",
-                    "updated_at",
-                    "days_until_debit",
-                    "is_due_soon",
-                    "is_overdue",
+                    (
+                        "created_at",
+                        "updated_at",
+                        "days_until_debit",
+                    ),
+                    (
+                        "is_due_soon",
+                        "is_overdue",
+                    ),
                 )
             },
         ),
     )
+
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
+
+        if db_field.name == "used_for" or db_field.name == "notes" and formfield:
+            formfield.widget.attrs.update(
+                {
+                    "rows": 3,
+                    "style": (
+                        "width: 100%; max-width: none; "
+                        "height: 4.5rem; min-height: 4.5rem; "
+                        "resize: vertical;"
+                    ),
+                }
+            )
+
+        return formfield
 
     @display(
         description="Export Subscription Report",

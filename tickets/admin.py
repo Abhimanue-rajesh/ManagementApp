@@ -111,11 +111,15 @@ class SupportTicketAdmin(ModelAdmin):
             "Ticket Details",
             {
                 "fields": (
-                    "ticket_number",
-                    "ticket_name",
-                    "routing",
-                    "raised_by",
-                    "is_urgent",
+                    (
+                        "ticket_number",
+                        "routing",
+                        "is_urgent",
+                    ),
+                    (
+                        "ticket_name",
+                        "raised_by",
+                    ),
                 )
             },
         ),
@@ -123,16 +127,33 @@ class SupportTicketAdmin(ModelAdmin):
             "Status",
             {
                 "fields": (
-                    "status",
-                    "expected_deadline",
-                    "last_updated_date",
+                    ("status", "expected_deadline", "created_at"),
+                    (
+                        "last_updated_date",
+                        "related_ticket",
+                    ),
                     "status_note",
-                    "related_ticket",
-                    "created_at",
                 )
             },
         ),
     )
+
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
+
+        if db_field.name == "status_note" and formfield:
+            formfield.widget.attrs.update(
+                {
+                    "rows": 3,
+                    "style": (
+                        "width: 100%; max-width: none; "
+                        "height: 4.5rem; min-height: 4.5rem; "
+                        "resize: vertical;"
+                    ),
+                }
+            )
+
+        return formfield
 
     @admin.display(description="Updated")
     def updated_on(self, obj):

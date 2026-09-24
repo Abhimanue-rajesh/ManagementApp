@@ -194,6 +194,7 @@ class TaskEmail(models.Model):
     sent_at = models.DateField(
         null=True,
         blank=True,
+        auto_now_add=True,
     )
 
     def __str__(self):
