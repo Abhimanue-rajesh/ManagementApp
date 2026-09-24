@@ -2,7 +2,7 @@ from django.contrib import admin, messages
 from django.contrib.auth import get_user_model
 from django.shortcuts import redirect
 from django.utils.timezone import localdate
-from unfold.admin import ModelAdmin, StackedInline, TabularInline
+from unfold.admin import ModelAdmin, TabularInline
 from unfold.decorators import display
 
 from tasks.models import (
@@ -16,9 +16,25 @@ from tasks.models import (
 )
 
 
-class TaskActivityAdmin(StackedInline):
+class TaskActivityAdmin(TabularInline):
     model = TaskActivity
     extra = 0
+    fields = ("activity_note", "activity_date")
+    ordering = ("-activity_date", "-pk")
+    per_page = 2
+
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
+
+        if db_field.name == "activity_note" and formfield:
+            formfield.widget.attrs.update(
+                {
+                    "rows": 3,
+                    "style": "height: 4.5rem; min-height: 4.5rem; resize: vertical;",
+                }
+            )
+
+        return formfield
 
 
 class TaskEmailInline(TabularInline):
@@ -86,12 +102,16 @@ class TaskAdmin(ModelAdmin):
             "Task Details",
             {
                 "fields": (
-                    "title",
+                    (
+                        "title",
+                        "status",
+                    ),
                     "description",
-                    "category",
-                    "priority",
-                    "status",
-                    "pending_with",
+                    (
+                        "category",
+                        "pending_with",
+                        "priority",
+                    ),
                 )
             },
         ),
@@ -100,10 +120,11 @@ class TaskAdmin(ModelAdmin):
             {
                 "fields": (
                     ("created_at", "updated_date"),
-                    "due_date",
-                    "days_left",
-                    "is_overdue",
-                    "deadline",
+                    ("due_date", "days_left"),
+                    (
+                        "is_overdue",
+                        "deadline",
+                    ),
                 )
             },
         ),
