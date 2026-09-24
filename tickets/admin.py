@@ -79,8 +79,10 @@ class SupportTicketAdmin(ModelAdmin):
         "ticket_number",
         "ticket_name",
         "status",
-        "is_urgent",
+        "expected_deadline",
+        "created_at",
         "updated_on",
+        "is_urgent",
     )
     list_filter = (
         "routing",
@@ -122,6 +124,7 @@ class SupportTicketAdmin(ModelAdmin):
             {
                 "fields": (
                     "status",
+                    "expected_deadline",
                     "last_updated_date",
                     "status_note",
                     "related_ticket",

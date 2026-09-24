@@ -38,6 +38,10 @@ class SupportTicket(models.Model):
         blank=True,
         unique=True,
     )
+    expected_deadline = models.DateField(
+        null=True,
+        blank=True,
+    )
     ticket_name = models.CharField(max_length=255)
     routing = models.ForeignKey(
         TicketRouting,

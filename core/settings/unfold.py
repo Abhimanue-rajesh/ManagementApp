@@ -272,6 +272,11 @@ UNFOLD = {
                         "icon": "payments",
                         "link": reverse_lazy("currency_converter"),
                     },
+                    {
+                        "title": "Extract Emails",
+                        "icon": "alternate_email",
+                        "link": reverse_lazy("email_extractor"),
+                    },
                 ],
             },
             {
