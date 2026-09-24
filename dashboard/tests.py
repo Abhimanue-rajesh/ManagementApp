@@ -20,15 +20,21 @@ class AllPagesLoadTest(TestCase):
 
     # URLs that should not be requested during this page-load test.
     EXCLUDED_URLS = {
-        # Authentication actions
         "admin:logout",
         "admin:password_change",
         "admin:password_change_done",
-        # Django Admin AJAX endpoint that requires query parameters.
         "admin:autocomplete",
-        # Read-only history models where manual creation is blocked.
         "admin:tasks_projecthistory_add",
         "admin:tickets_supporttickethistory_add",
+        # Easy Audit blocks manual add and purge.
+        "admin:easyaudit_crudevent_add",
+        "admin:easyaudit_crudevent_purge",
+        "admin:easyaudit_loginevent_add",
+        "admin:easyaudit_loginevent_purge",
+        "admin:easyaudit_requestevent_add",
+        "admin:easyaudit_requestevent_purge",
+        # This endpoint does not accept GET.
+        "django-lumen-save-preferences",
     }
 
     # Paths that are not normal HTML pages.

@@ -76,13 +76,14 @@ class SupportTicketHistoryInline(admin.TabularInline):
 class SupportTicketAdmin(ModelAdmin):
     change_list_template = "tickets/change_list.html"
     list_display = (
-        "ticket_number",
-        "ticket_name",
+        "number",
+        "name",
         "status",
-        "expected_deadline",
-        "created_at",
-        "updated_on",
-        "is_urgent",
+        "deadline",
+        "created",
+        "updated",
+        "review",
+        "urgent",
     )
     list_filter = (
         "routing",
@@ -114,7 +115,6 @@ class SupportTicketAdmin(ModelAdmin):
                     (
                         "ticket_number",
                         "routing",
-                        "is_urgent",
                     ),
                     (
                         "ticket_name",
@@ -133,6 +133,11 @@ class SupportTicketAdmin(ModelAdmin):
                         "related_ticket",
                     ),
                     "status_note",
+                    (
+                        "is_urgent",
+                        "marked_for_review",
+                        "quote_number",
+                    ),
                 )
             },
         ),
@@ -155,12 +160,32 @@ class SupportTicketAdmin(ModelAdmin):
 
         return formfield
 
+    @admin.display(description="Number")
+    def number(self, obj):
+        return obj.ticket_number
+
+    @admin.display(description="Title")
+    def name(self, obj):
+        return obj.ticket_name
+
+    @admin.display(boolean=True, description="Review")
+    def review(self, obj):
+        return obj.marked_for_review
+
+    @admin.display(boolean=True, description="Urgent")
+    def urgent(self, obj):
+        return obj.is_urgent
+
+    @admin.display(description="Deadline")
+    def deadline(self, obj):
+        return obj.expected_deadline
+
     @admin.display(description="Updated")
-    def updated_on(self, obj):
+    def updated(self, obj):
         return obj.last_updated_date
 
     @admin.display(description="Created")
-    def created_on(self, obj):
+    def created(self, obj):
         return obj.created_at
 
     class Media:

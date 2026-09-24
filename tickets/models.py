@@ -66,6 +66,11 @@ class SupportTicket(models.Model):
         max_length=100,
         blank=True,
     )
+    quote_number = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        unique=True,
+    )
     related_ticket = models.ForeignKey(
         "self",
         on_delete=models.SET_NULL,
@@ -74,6 +79,7 @@ class SupportTicket(models.Model):
         related_name="related_tickets",
     )
     is_urgent = models.BooleanField(default=False)
+    marked_for_review = models.BooleanField(default=False)
     created_at = models.DateField(auto_now_add=True)
 
     class Meta:

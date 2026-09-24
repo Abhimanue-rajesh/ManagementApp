@@ -47,10 +47,7 @@ class TaskEmailInline(TabularInline):
     model = TaskEmail
     extra = 0
 
-    fields = (
-        "subject",
-        "sent_at",
-    )
+    fields = ("subject", "sent_at")
     readonly_fields = ("sent_at",)
 
     show_change_link = True
@@ -296,12 +293,12 @@ class PendingWithAdmin(ModelAdmin):
 
 @admin.register(TaskEmail)
 class TaskEmailAdmin(ModelAdmin):
+    readonly_fields = ("sent_at",)
     list_display = (
         "subject",
         "task",
         "sent_at",
     )
-
     list_filter = ("sent_at",)
 
     search_fields = (
