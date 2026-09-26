@@ -1,4 +1,6 @@
 import base64
+import mimetypes
+import re
 from datetime import datetime, timedelta
 from datetime import timezone as datetime_timezone
 from email import policy
@@ -35,6 +37,7 @@ def decode_gmail_raw(value):
 
 
 def extract_body(message):
+    """Get readable text, preferring the email's plain-text part."""
     part = message.get_body(preferencelist=("plain", "html"))
     if part is None:
         return ""
@@ -42,15 +45,35 @@ def extract_body(message):
     content = part.get_content()
     if part.get_content_type() == "text/html":
         return strip_tags(content).strip()
+
     return str(content).strip()
 
 
-def is_addressed_to_mailbox(message):
-    headers = []
-    for name in ("To", "Cc", "Delivered-To", "X-Original-To"):
-        headers.extend(message.get_all(name, []))
+def extract_html_body(message):
+    """Keep the HTML for the protected original-email preview."""
+    part = message.get_body(preferencelist=("html",))
+    if part is None:
+        return ""
+    return str(part.get_content())
 
-    recipients = {address.strip().lower() for _, address in getaddresses(headers)}
+
+def extract_request_text(body):
+    """Keep the request above a standard '--' email signature."""
+    text = body.replace("\r\n", "\n").strip()
+    signature = re.search(r"(?m)^\s*--\s*$", text)
+
+    if signature:
+        text = text[: signature.start()].strip()
+
+    return text
+
+
+def is_addressed_to_mailbox(message):
+    header_values = []
+    for name in ("To", "Cc", "Delivered-To", "X-Original-To"):
+        header_values.extend(message.get_all(name, []))
+
+    recipients = {address.strip().lower() for _, address in getaddresses(header_values)}
     return MAILBOX in recipients
 
 
@@ -77,21 +100,30 @@ def sender_is_allowed(sender_email):
 
 
 def save_attachments(parsed_message, ticket, ticket_message):
+    """Save normal attachments and CID images used inside email HTML."""
     count = 0
 
     for index, part in enumerate(parsed_message.walk()):
         if part.is_multipart():
             continue
 
+        content_id = str(part.get("Content-ID", "")).strip().strip("<>")
         filename = part.get_filename()
-        if not filename:
+        is_inline_image = bool(content_id) and part.get_content_maintype() == "image"
+
+        if not filename and not is_inline_image:
             continue
 
         content = part.get_payload(decode=True)
         if content is None:
             continue
 
-        safe_name = filename.replace("\\", "/").split("/")[-1][:255]
+        if filename:
+            safe_name = filename.replace("\\", "/").split("/")[-1][:255]
+        else:
+            extension = mimetypes.guess_extension(part.get_content_type()) or ""
+            safe_name = f"inline-image-{index}{extension}"
+
         if not safe_name:
             continue
 
@@ -101,6 +133,8 @@ def save_attachments(parsed_message, ticket, ticket_message):
             part_index=index,
             original_name=safe_name,
             content_type=part.get_content_type(),
+            content_id=content_id[:255],
+            is_inline=(part.get_content_disposition() == "inline" or bool(content_id)),
             size=len(content),
         )
         attachment.file.save(
@@ -153,8 +187,7 @@ class Command(BaseCommand):
                 "Mailbox token not found. Connect the Google mailbox first."
             )
 
-        # Record this before calling Gmail. Advance the cursor only
-        # after the entire import completes successfully.
+        # Set the next cursor only after the entire import succeeds.
         scan_started_at = timezone.now()
 
         scan_from = state.started_at
@@ -188,14 +221,15 @@ class Command(BaseCommand):
                 .execute()
             )
             gmail_ids.extend(item["id"] for item in result.get("messages", []))
+
             page_token = result.get("nextPageToken")
             if not page_token:
                 break
 
-        # Fetch first, then sort by Gmail's received timestamp.
-        # This ensures the first email creates the ticket before
-        # replies in the same Gmail thread are imported.
+        # Fetch and sort by received time so an original email is
+        # imported before later messages in the same Gmail thread.
         messages = []
+
         for gmail_id in dict.fromkeys(gmail_ids):
             if TicketEmailMessage.objects.filter(gmail_message_id=gmail_id).exists():
                 continue
@@ -222,8 +256,6 @@ class Command(BaseCommand):
                 tz=datetime_timezone.utc,
             )
 
-            # Protect the original activation boundary even though
-            # the search has a deliberate overlap.
             if received_at <= state.started_at:
                 skipped_count += 1
                 continue
@@ -245,7 +277,10 @@ class Command(BaseCommand):
 
             subject = str(parsed.get("Subject", "")).strip()[:255]
             subject = subject or "(No subject)"
+
             body = extract_body(parsed)
+            html_body = extract_html_body(parsed)
+            request_text = extract_request_text(body)
             thread_id = data["threadId"]
 
             with transaction.atomic():
@@ -264,7 +299,7 @@ class Command(BaseCommand):
                         subject=subject,
                         requester_name=sender_name[:255],
                         requester_email=sender_email,
-                        description=body or "(No text body)",
+                        description=request_text or "(No text body)",
                         received_at=received_at,
                     )
                     is_reply = False
@@ -276,6 +311,7 @@ class Command(BaseCommand):
                     sender_email=sender_email,
                     subject=subject,
                     body=body,
+                    html_body=html_body,
                     received_at=received_at,
                 )
 
@@ -289,9 +325,10 @@ class Command(BaseCommand):
                 reply_count += 1
             else:
                 created_count += 1
+
             attachment_count += saved_files
 
-        # A failed confirmation stays pending for the next run.
+        # Retry acknowledgments that failed on an earlier run.
         pending = SupportTicket.objects.filter(
             confirmation_sent_at__isnull=True,
             email_messages__isnull=False,
@@ -313,6 +350,7 @@ class Command(BaseCommand):
                     recipient_list=[ticket.requester_email],
                     fail_silently=False,
                 )
+
                 if sent != 1:
                     raise RuntimeError("Email backend did not report a sent message")
             except Exception as exc:

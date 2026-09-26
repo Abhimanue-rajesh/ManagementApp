@@ -67,6 +67,7 @@ class TicketEmailMessage(models.Model):
     sender_email = models.EmailField()
     subject = models.CharField(max_length=255, blank=True)
     body = models.TextField(blank=True)
+    html_body = models.TextField(blank=True)
     received_at = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -119,6 +120,8 @@ class TicketAttachment(models.Model):
     original_name = models.CharField(max_length=255)
     content_type = models.CharField(max_length=255, blank=True)
     size = models.PositiveBigIntegerField(default=0)
+    content_id = models.CharField(max_length=255, blank=True, db_index=True)
+    is_inline = models.BooleanField(default=False)
     file = models.FileField(
         storage=private_attachment_storage,
         upload_to=attachment_path,
