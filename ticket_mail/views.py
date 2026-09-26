@@ -17,6 +17,7 @@ from googleapiclient.discovery import build
 SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
 MAILBOX = "ticket@thedeepseafood.com"
 STATE_SESSION_KEY = "ticket_mailbox_oauth_state"
+VERIFIER_SESSION_KEY = "ticket_mailbox_code_verifier"
 
 
 def _admin_only(request):
@@ -65,6 +66,7 @@ def connect(request):
         prompt="consent",
     )
     request.session[STATE_SESSION_KEY] = state
+    request.session[VERIFIER_SESSION_KEY] = flow.code_verifier
     return redirect(authorization_url)
 
 
@@ -74,13 +76,19 @@ def callback(request):
     _admin_only(request)
 
     expected_state = request.session.pop(STATE_SESSION_KEY, None)
-    if not expected_state or request.GET.get("state") != expected_state:
+    code_verifier = request.session.pop(VERIFIER_SESSION_KEY, None)
+    if (
+        not expected_state
+        or request.GET.get("state") != expected_state
+        or not code_verifier
+    ):
         return HttpResponseBadRequest("Invalid OAuth state.")
 
     if request.GET.get("error"):
         return HttpResponseBadRequest("Google authorization was not granted.")
 
     flow = _flow(state=expected_state)
+    flow.code_verifier = code_verifier
     flow.fetch_token(authorization_response=request.build_absolute_uri())
 
     credentials = flow.credentials
