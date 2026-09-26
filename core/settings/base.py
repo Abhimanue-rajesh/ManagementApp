@@ -133,6 +133,11 @@ GOOGLE_TICKET_REDIRECT_URI = (
 
 FIELD_ENCRYPTION_KEY = os.environ.get("FIELD_ENCRYPTION_KEY")
 
+TICKET_MAIL_PRIVATE_ROOT = os.getenv(
+    "TICKET_MAIL_PRIVATE_ROOT",
+    str(BASE_DIR / "private_ticket_files"),
+)
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,

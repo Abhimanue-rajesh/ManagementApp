@@ -12,7 +12,7 @@ class Command(BaseCommand):
 
         try:
             sent = send_mail(
-                subject="Ticket System – Email Test",
+                subject="Ticket System - Email Test",
                 message=(
                     "This is a test email from the IT ticketing system.\n\n"
                     "The outgoing email configuration is working."

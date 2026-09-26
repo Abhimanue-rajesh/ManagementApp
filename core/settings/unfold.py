@@ -95,6 +95,23 @@ UNFOLD = {
                 ],
             },
             {
+                "title": "Mail Tickets",
+                "collapsible": True,
+                "separator": True,
+                "items": [
+                    {
+                        "title": "Mail Tickets",
+                        "icon": "person",
+                        "link": reverse_lazy(
+                            "admin:ticket_mail_supportticket_changelist"
+                        ),
+                        "permission": lambda request: request.user.has_perm(
+                            "auth.view_user"
+                        ),
+                    },
+                ],
+            },
+            {
                 "title": "Support Tickets",
                 "collapsible": True,
                 "separator": True,
