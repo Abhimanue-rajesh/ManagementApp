@@ -131,12 +131,13 @@ class SupportTicketAdmin(ModelAdmin):
             "Ticket",
             {
                 "fields": (
-                    "ticket_number",
-                    "subject",
-                    "requester_name",
-                    "requester_email",
-                    "description",
-                    "received_at",
+                    (
+                        "ticket_number",
+                        "subject",
+                        "received_at",
+                    ),
+                    ("requester_name", "requester_email"),
+                    # "description",
                 )
             },
         ),
