@@ -123,6 +123,14 @@ EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
 EMAIL_DEBUG = os.getenv("EMAIL_DEBUG")
 
+# Google OAuth configuration
+GOOGLE_OAUTH_CLIENT_FILE = os.getenv("GOOGLE_OAUTH_CLIENT_FILE")
+GOOGLE_TICKET_TOKEN_FILE = os.getenv("GOOGLE_TICKET_TOKEN_FILE")
+
+GOOGLE_TICKET_REDIRECT_URI = (
+    "https://task.thedeepseafood.com/ticket_mail/google/oauth/callback/"
+)
+
 FIELD_ENCRYPTION_KEY = os.environ.get("FIELD_ENCRYPTION_KEY")
 
 LOGGING = {

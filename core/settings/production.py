@@ -1,5 +1,3 @@
-import os
-
 from .base import *  # noqa: F401, F403
 
 DEBUG = True
@@ -31,10 +29,3 @@ DATABASES = {
         "NAME": BASE_DIR / "db.sqlite3",  # noqa: F405
     }
 }
-
-GOOGLE_OAUTH_CLIENT_FILE = os.getenv("GOOGLE_OAUTH_CLIENT_FILE")
-GOOGLE_TICKET_TOKEN_FILE = os.getenv("GOOGLE_TICKET_TOKEN_FILE")
-
-GOOGLE_TICKET_REDIRECT_URI = (
-    "https://task.thedeepseafood.com/ticket_mail/google/oauth/callback/"
-)
