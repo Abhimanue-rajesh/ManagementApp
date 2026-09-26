@@ -35,6 +35,8 @@ class AllPagesLoadTest(TestCase):
         "admin:easyaudit_requestevent_purge",
         # This endpoint does not accept GET.
         "django-lumen-save-preferences",
+        "ticket_mailbox_connect",
+        "ticket_mailbox_callback",
     }
 
     # Paths that are not normal HTML pages.
