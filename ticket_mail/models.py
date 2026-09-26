@@ -7,6 +7,14 @@ from django.db import models
 from django.utils import timezone
 
 
+class MailboxSyncState(models.Model):
+    started_at = models.DateTimeField(default=timezone.now)
+    last_checked_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Ticket mailbox active since {self.started_at}"
+
+
 class SupportTicket(models.Model):
     class Status(models.TextChoices):
         OPEN = "OPEN", "Open"

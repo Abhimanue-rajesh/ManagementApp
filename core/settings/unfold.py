@@ -101,12 +101,16 @@ UNFOLD = {
                 "items": [
                     {
                         "title": "Mail Tickets",
-                        "icon": "person",
+                        "icon": "confirmation_number",
                         "link": reverse_lazy(
                             "admin:ticket_mail_supportticket_changelist"
                         ),
-                        "permission": lambda request: request.user.has_perm(
-                            "auth.view_user"
+                    },
+                    {
+                        "title": "Mail Allowed Domains",
+                        "icon": "verified",
+                        "link": reverse_lazy(
+                            "admin:ticket_mail_allowedemaildomain_changelist"
                         ),
                     },
                 ],
