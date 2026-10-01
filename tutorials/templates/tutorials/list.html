@@ -1,0 +1,14 @@
+{% extends "tutorials/tutorials_base.html" %}
+{% block content %}
+    <h1>Published Tutorials</h1>
+    {% for tutorial in tutorials %}
+        <div class="card">
+            <h2>
+                <a href="{% url 'tutorials:detail' tutorial.pk %}">{{ tutorial.title }}</a>
+            </h2>
+            <p>Updated {{ tutorial.updated_at|date:"d M Y" }}</p>
+        </div>
+    {% empty %}
+        <div class="card">No published tutorials available yet.</div>
+    {% endfor %}
+{% endblock content %}

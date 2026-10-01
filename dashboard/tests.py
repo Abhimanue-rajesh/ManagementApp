@@ -37,6 +37,7 @@ class AllPagesLoadTest(TestCase):
         "django-lumen-save-preferences",
         "ticket_mailbox_connect",
         "ticket_mailbox_callback",
+        "tutorials:logout",
     }
 
     # Paths that are not normal HTML pages.

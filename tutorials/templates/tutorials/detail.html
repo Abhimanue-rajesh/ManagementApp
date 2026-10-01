@@ -1,0 +1,8 @@
+{% extends "tutorials/tutorials_base.html" %}
+{% block title %}{{ tutorial.title }}{% endblock title %}
+{% block content %}
+    <p>
+        <a href="{% url 'tutorials:list' %}">← All tutorials</a>
+    </p>
+    <article class="markdown-body">{{ content_html|safe }}</article>
+{% endblock content %}

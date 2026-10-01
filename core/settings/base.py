@@ -42,6 +42,7 @@ EXTERNAL_APPS = [
     "accounts.apps.AccountsConfig",
     "notifications.apps.NotificationsConfig",
     "ticket_mail.apps.TicketMailConfig",
+    "tutorials.apps.TutorialsConfig",
 ]
 
 INSTALLED_APPS += EXTERNAL_APPS

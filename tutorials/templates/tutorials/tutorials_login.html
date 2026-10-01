@@ -1,0 +1,14 @@
+{% extends "tutorials/tutorials_base.html" %}
+{% block title %}
+    Tutorial Login
+{% endblock title %}
+{% block content %}
+    <div class="card login-card">
+        <h1>Tutorial Login</h1>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Log in</button>
+        </form>
+    </div>
+{% endblock content %}

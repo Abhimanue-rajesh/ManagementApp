@@ -191,6 +191,18 @@ UNFOLD = {
                 ],
             },
             {
+                "title": "Tutorials",
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": "Tutorials",
+                        "icon": "menu_book",
+                        "link": reverse_lazy("admin:tutorials_tutorial_changelist"),
+                    },
+                ],
+            },
+            {
                 "title": "Web Management",
                 "collapsible": True,
                 "separator": True,

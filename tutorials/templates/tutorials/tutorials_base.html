@@ -1,0 +1,49 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="">
+        <meta name="keywords" content="">
+        <title>
+            {% block title %}
+                Tutorials
+            {% endblock title %}
+        </title>
+        <link rel="stylesheet" href="{% static 'tutorials/css/style.css' %}">
+    </head>
+    <body>
+        <header class="header">
+            <div class="header-inner">
+                <a class="brand" href="{% url 'tutorials:list' %}">
+                    <span class="brand-icon" aria-hidden="true">
+                        <svg width="18"
+                             height="18"
+                             viewBox="0 0 24 24"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="1.7"
+                             stroke-linecap="round"
+                             stroke-linejoin="round">
+                            <path d="M4 4h6a3 3 0 0 1 3 3v14a4 4 0 0 0-4-3H4z" />
+                            <path d="M20 4h-4a3 3 0 0 0-3 3v14a4 4 0 0 1 4-3h3z" />
+                        </svg>
+                    </span>
+                    Tutorials
+                </a>
+                {% if user.is_authenticated %}
+                    <form class="account" method="post" action="{% url 'tutorials:logout' %}">
+                        {% csrf_token %}
+                        <span class="username">{{ user.get_username }}</span>
+                        <button type="submit">Log out</button>
+                    </form>
+                {% endif %}
+            </div>
+        </header>
+        <main>
+            {% block content %}
+            {% endblock content %}
+        </main>
+    </body>
+</html>

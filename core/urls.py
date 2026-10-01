@@ -31,6 +31,7 @@ urlpatterns = [
         name="email_extractor",
     ),
     path("ticket_mail/google/oauth/", include("ticket_mail.urls")),
+    path("tutorials/", include("tutorials.urls")),
     path(
         "", admin.site.urls
     ),  # this should be placed last as admin checks only the admin urls above this.
