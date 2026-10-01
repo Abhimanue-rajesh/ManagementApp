@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path, re_path
+from django.views.generic import RedirectView
 from django.views.static import serve
 
 from dashboard.admin import group_members_dashboard
@@ -31,6 +32,14 @@ urlpatterns = [
         name="email_extractor",
     ),
     path("ticket_mail/google/oauth/", include("ticket_mail.urls")),
+    path(
+        "tutorials/login",
+        RedirectView.as_view(
+            pattern_name="tutorials:login",
+            permanent=False,
+            query_string=True,
+        ),
+    ),
     path("tutorials/", include("tutorials.urls")),
     path(
         "", admin.site.urls

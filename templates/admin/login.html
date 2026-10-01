@@ -1,0 +1,8 @@
+{% extends "admin/login.html" %}
+{% block content %}
+    {{ block.super }}
+    <a href="{% url 'tutorials:login' %}"
+       class="border border-base-200 dark:border-base-700 rounded-default flex items-center justify-center font-medium mt-6 px-3 py-2 text-base-700 dark:text-base-200">
+        View Tutorials
+    </a>
+{% endblock content %}
