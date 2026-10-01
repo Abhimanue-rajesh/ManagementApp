@@ -33,8 +33,10 @@ idna==3.20
 isort==8.0.1
 jsbeautifier==1.15.4
 json5==0.14.0
+Markdown==3.11
 mccabe==0.7.0
 mypy_extensions==1.1.0
+nh3==0.3.7
 nodeenv==1.10.0
 oauthlib==3.3.1
 openpyxl==3.1.5
