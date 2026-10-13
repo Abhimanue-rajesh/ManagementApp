@@ -48,6 +48,7 @@ class DomainManagerAdmin(ModelAdmin):
         "registrar__name",
     )
     list_filter = ("renewal_status", "expiry_date")
+    ordering = ("expiry_date",)
     inlines = [WebPageInline]
 
     class Media:
