@@ -66,7 +66,8 @@ class SupportTicket(models.Model):
         max_length=100,
         blank=True,
     )
-    quote_number = models.PositiveIntegerField(
+    quote_number = models.CharField(
+        max_length=100,
         null=True,
         blank=True,
         unique=True,
