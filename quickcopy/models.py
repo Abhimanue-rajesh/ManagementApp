@@ -5,6 +5,7 @@ class QuickCopy(models.Model):
     title = models.CharField(max_length=255)
     content = models.TextField()
     related_to_tickets = models.BooleanField(default=False)
+    show_in_ticket_change = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

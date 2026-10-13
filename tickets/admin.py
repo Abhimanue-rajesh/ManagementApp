@@ -75,6 +75,7 @@ class SupportTicketHistoryInline(admin.TabularInline):
 @admin.register(SupportTicket)
 class SupportTicketAdmin(ModelAdmin):
     change_list_template = "tickets/change_list.html"
+    change_form_template = "tickets/change_form.html"
     list_display = (
         "number",
         "name",
@@ -288,6 +289,25 @@ class SupportTicketAdmin(ModelAdmin):
             return queryset
 
         return queryset.exclude(status__name__iexact="Closed")
+
+    def changeform_view(
+        self,
+        request,
+        object_id=None,
+        form_url="",
+        extra_context=None,
+    ):
+        extra_context = extra_context or {}
+        extra_context["quick_copy_items"] = QuickCopy.objects.filter(
+            show_in_ticket_change=True
+        ).order_by("title")
+
+        return super().changeform_view(
+            request,
+            object_id=object_id,
+            form_url=form_url,
+            extra_context=extra_context,
+        )
 
 
 @admin.register(TicketRouting)

@@ -1,0 +1,30 @@
+{% if quick_copy_items %}
+    <div class="mb-6">
+        <div class="rounded-2xl  bg-white shadow-sm dark:border-gray-800 dark:bg-base-900">
+            <div class="flex flex-nowrap gap-3">
+                {% for item in quick_copy_items %}
+                    <div class="group flex min-w-0 flex-1 items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 transition-all hover:border-primary-500 hover:shadow-md dark:border-gray-700 dark:bg-base-800">
+                        <div class="min-w-0 flex-1">
+                            <div class="truncate text-sm font-semibold text-gray-900 dark:text-white">{{ item.title }}</div>
+                            <div class="truncate text-xs text-gray-500 dark:text-gray-400">{{ item.content|truncatechars:80 }}</div>
+                        </div>
+                        <button type="button"
+                                class="quickcopy-btn inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 transition hover:bg-primary-50 hover:text-primary-600 dark:border-gray-700 dark:bg-base-900 dark:text-gray-300"
+                                data-copy-text="{{ item.content }}">
+                            <span class="copy-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                     fill="none"
+                                     viewBox="0 0 24 24"
+                                     stroke-width="1.5"
+                                     stroke="currentColor"
+                                     class="h-5 w-5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125H4.875A1.125 1.125 0 013.75 20.625V9.75c0-.621.504-1.125 1.125-1.125H8.25m7.5-5.25h3.375c.621 0 1.125.504 1.125 1.125v10.875c0 .621-.504 1.125-1.125 1.125H9.375A1.125 1.125 0 018.25 15.375V4.5c0-.621.504-1.125 1.125-1.125H15.75z" />
+                                </svg>
+                            </span>
+                        </button>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endif %}

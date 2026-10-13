@@ -57,6 +57,14 @@ UNFOLD = {
                             "subscriptions.view_subscriptiontracker"
                         ),
                     },
+                    {
+                        "title": "Credentials",
+                        "icon": "key",
+                        "link": reverse_lazy("admin:credentials_credential_changelist"),
+                        "permission": lambda request: request.user.has_perm(
+                            "credentials.view_credential"
+                        ),
+                    },
                 ],
             },
             {
@@ -281,14 +289,6 @@ UNFOLD = {
                 "collapsible": True,
                 "separator": True,
                 "items": [
-                    {
-                        "title": "Credentials",
-                        "icon": "key",
-                        "link": reverse_lazy("admin:credentials_credential_changelist"),
-                        "permission": lambda request: request.user.has_perm(
-                            "credentials.view_credential"
-                        ),
-                    },
                     {
                         "title": "Quick Copy",
                         "icon": "content_copy",
